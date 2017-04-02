@@ -8,13 +8,28 @@ There's no bindings, you'll have to create your own before you can use them.
 
 ```haskell
 digestiveSplicesCustom :: MonadIO m => View Text -> Splices (Splice m)
-digestiveSplicesCustom v = do
-    digestiveSplices v
-    "dfPlainText" ## dfPlainText v
-    "dfInputListCustom" ## dfInputListCustom digestiveSplicesCustom v
+digestiveSplicesCustom = digestiveSplices' splices
+	where
+		splices v = do
+			"dfPlainText" ## dfPlainText v
+			"dfInputListCustom" ## dfInputListCustom digestiveSplicesCustom v
 
 fooH :: AppHandler ()
 fooH = do
-    (view, result) <- runForm "form" fooForm
-    renderWithSplices "path/to/template" $ digestiveSplicesCustom view
+	(view, result) <- runForm "form" fooForm
+	renderWithSplices "path/to/template" $ digestiveSplicesCustom view
+```
+
+Alternately:
+
+```haskell
+digestiveSplicesCustom' :: MonadIO m => View Text -> Splices (Splice m)
+digestiveSplicesCustom' v = do
+	"dfPlainText" ## dfPlainText v
+	"dfInputListCustom" ## dfInputListCustom digestiveSplicesCustom v
+
+fooH' :: AppHandler ()
+fooH' = do
+	(view, result) <- runForm "form" fooForm
+	renderWithSplices "path/to/template" $ digestiveSplices' digestiveSplicesCustom' view
 ```
