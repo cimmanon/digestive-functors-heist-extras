@@ -67,59 +67,88 @@ dfInputListStatic splices view = do
 	runChildrenWith $ "dfListItem" ## mapSplices (runChildrenWith . digestiveSplices' splices) items
 
 -- this is a variation on the dfInputList splice found in Text.Digestive.Heist
--- instead of creating a div, it creates a fieldset.  if the dfListItem attribute splice
--- is applied to a fieldset, the template will get disabled thanks to the disabled attribute.
--- this allows you to use the `required` attribute on form fields.
+-- that does not generate any extra markup.  Instead, multiple splices and
+-- attribute splices are available for recreating it using the exact markup
+-- you want.
+--
+-- If you need to recreate the add/remove controls attributes,
+-- use the dfListPath and dfListItemPath splices.
+
+{-
+Attribute Splices:
+	listAttrs (intended for the list's container element; eg. div, fieldset)
+
+Splices:
+	indices
+	dfListItem
+		Attribute Splices:
+			wrapperAttrs (intended for container elements; eg. li, tr)
+			itemAttrs (intended for form elements; eg. input, fieldset, textarea)
+			isDisabled
+			isHidden
+
+		Splices
+			dfListItemPath (contains the path to the list item; eg. form.list_name.0)
+	dfListPath (contains the path to the list; eg. form.list_name)
+-}
 dfInputListCustom :: MonadIO m => (View T.Text -> Splices (Splice m)) -> View T.Text -> Splice m
 dfInputListCustom splices view = do
 	(ref, _) <- getRefAttributes Nothing
 	let
 		listRef = absoluteRef ref view
-		listAttrs =
+		listAttrs _ = return
 			[ ("id", listRef)
 			, ("class", "inputList")
 			]
-			{-
-		addControl _ = return $ disableOnclick ref view
-			[ ("onclick", T.concat [ "addInputListItem(this, '"
-								   , listRef
-								   , "'); return false;"] ) ]
-		removeControl _ = return $ disableOnclick ref view
-			[ ("onclick", T.concat [ "removeInputListItem(this, '"
-								   , listRef
-								   , "'); return false;"] ) ]
-								   -}
-		itemAttrs v _ = return
-			[ ("id", T.concat [listRef, ".", last $ "0" : viewContext v])
-			, ("class", T.append listRef ".inputListItem inputListItem")
-			]
-		templateAttrs v _ = return
-			[ ("id", T.concat [listRef, ".", last $ "-1" : viewContext v])
-			, ("class", T.append listRef ".inputListTemplate inputListTemplate")
-			, ("style", "display: none;")
-			, ("disabled", "disabled")
-			]
+
+		templateAttrs v = do
+			let
+				itemRef = absoluteRef "" v
+			"wrapperAttrs" ## \_ -> return
+				[ ("id", itemRef)
+				, ("class", T.append itemRef ".inputListTemplate inputListTemplate")
+				, ("style", "display: none") ]
+			"itemAttrs" ## \_ -> return
+				[ ("style", "display: none;")
+				, ("disabled", "disabled")
+				]
+			"isDisabled" ## const (return [ ("disabled", "disabled") ])
+			"isHidden" ## const (return [ ("style", "display: none;") ])
+
+		itemAttrs v = do
+			let
+				itemRef = absoluteRef "" v
+			"wrapperAttrs" ## \_ -> return
+				[ ("id", itemRef)
+				, ("class", T.append itemRef ".inputListItem inputListItem")
+				]
+			"itemAttrs" ## const mempty
+			"isDisabled" ## const mempty
+			"isHidden" ## const mempty
+
 		items = listSubViews ref view
-		f attrs v = localHS (bindAttributeSplices ("itemAttrs" ## attrs v) .
-					bindDigestiveSplices' splices v) runChildren
+
+		f attrs v = localHS (bindAttributeSplices (attrs v)) $ runChildrenWith $ do
+			digestiveSplices' splices v
+			"dfListItemPath" ## return [X.TextNode $ absoluteRef "" v]
+
 		dfListItem = do
 			template <- f templateAttrs (makeListSubView ref (-1) view)
 			res <- mapSplices (f itemAttrs) items
 			return $ template ++ res
-			{-
-		attrSplices = do
-			"addControl"    ## addControl
-			"removeControl" ## removeControl
-			-}
-		attrSplices = mempty
-	nodes <- localHS (bindSplices ("dfListItem" ## dfListItem) .
-					bindAttributeSplices attrSplices) runChildren
-	let indices =
-		[ X.Element "input"
-			[ ("type", "hidden")
-			, ("name", T.intercalate "." [listRef, indicesRef])
-			, ("value", T.intercalate "," $ map
-				(last . ("0":) . viewContext) items)
-			] []
-		]
-	return [X.Element "fieldset" listAttrs (nodes ++ indices)]
+
+		attrSplices = "listAttrs" ## listAttrs
+
+		indices =
+			[ X.Element "input"
+				[ ("type", "hidden")
+				, ("name", T.intercalate "." [listRef, indicesRef])
+				, ("value", T.intercalate "," $ map
+					(last . ("0":) . viewContext) items)
+				] []
+			]
+
+	localHS (bindAttributeSplices attrSplices) $ runChildrenWith $ do
+		"indices" ## return indices
+		"dfListItem" ## dfListItem
+		"dfListPath" ## return [X.TextNode listRef]
