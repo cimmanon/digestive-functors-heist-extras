@@ -2,6 +2,10 @@
 
 module Text.Digestive.Heist.Extras
 	( dfPlainText
+	, dfPlainChoice
+	, dfPlainChoiceGroup
+	, dfPlainBool
+	, dfPlainFile
 	, dfInputCheckboxMultiple
 	, dfInputListStatic
 	, dfInputListCustom
@@ -21,13 +25,47 @@ import Text.Digestive.Form.List
 import Text.Digestive.View
 
 {----------------------------------------------------------------------------------------------------{
-                                                                      | Simple
+                                                                      | Plain Text
 }----------------------------------------------------------------------------------------------------}
 
 dfPlainText :: Monad m => View v -> Splice m
 dfPlainText view = do
 	(ref, _) <- getRefAttributes Nothing
-	return [X.TextNode $ fieldInputText ref view]
+	textSplice $ fieldInputText ref view
+
+dfPlainChoice :: Monad m => View T.Text -> Splice m
+dfPlainChoice view = do
+	(ref, _) <- getRefAttributes Nothing
+	let
+		vals = filter (\(_, _, sel) -> sel) $ fieldInputChoice ref view
+		choiceSplice (val, name, _) = runChildrenWith $ do
+			"value" ## textSplice val
+			"name" ## textSplice name
+	mapSplices choiceSplice vals
+
+dfPlainChoiceGroup :: Monad m => View T.Text -> Splice m
+dfPlainChoiceGroup view = do
+	(ref, _) <- getRefAttributes Nothing
+	let
+		filterChoice (_, _, sel) = sel
+		vals = filter (\(_, options) -> not $ null $ filter filterChoice options) $ fieldInputChoiceGroup ref view
+		groupSplice (name, options) = runChildrenWith $ do
+			"group" ## textSplice name
+			"choice" ## mapSplices choiceSplice $ filter filterChoice options
+		choiceSplice (val, name, _) = runChildrenWith $ do
+			"value" ## textSplice val
+			"name" ## textSplice name
+	mapSplices groupSplice vals
+
+dfPlainBool :: Monad m => View T.Text -> Splice m
+dfPlainBool view = do
+	(ref, _) <- getRefAttributes Nothing
+	textSplice $ if (fieldInputBool ref view) then "Yes" else "No"
+
+dfPlainFile :: Monad m => View T.Text -> Splice m
+dfPlainFile view = do
+	(ref, _) <- getRefAttributes Nothing
+	mapSplices (textSplice . T.pack) $ fieldInputFile ref view
 
 {----------------------------------------------------------------------------------------------------{
                                                                       | Choice
