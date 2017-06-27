@@ -90,6 +90,8 @@ Splices:
 		Splices
 			dfListItemPath (contains the path to the list item; eg. form.list_name.0)
 			dfListItemType (indicates the item type; eg. inputListTemplate or inputListItem)
+			dfIfInputListItem (show content if it is an inputListItem)
+			dfIfInputListTemplate (show content if it is an inputListTemplate)
 	dfListPath (contains the path to the list; eg. form.list_name)
 -}
 dfInputListCustom :: MonadIO m => (View T.Text -> Splices (Splice m)) -> View T.Text -> Splice m
@@ -129,14 +131,19 @@ dfInputListCustom splices view = do
 
 		items = listSubViews ref view
 
-		f itemType attrs v = localHS (bindAttributeSplices (attrs v)) $ runChildrenWith $ do
+		f itemType v = localHS (bindAttributeSplices (attrs v)) $ runChildrenWith $ do
 			digestiveSplices' splices v
 			"dfListItemPath" ## return [X.TextNode $ absoluteRef "" v]
 			"dfListItemType" ## return [X.TextNode itemType]
+			"dfIfInputListItem" ## if isInputListItem then runChildren else return []
+			"dfIfInputListTemplate" ## if isInputListItem then return [] else runChildren
+			where
+				isInputListItem = itemType == "inputListItem"
+				attrs = if isInputListItem then itemAttrs else templateAttrs
 
 		dfListItem = do
-			template <- f "inputListTemplate" templateAttrs (makeListSubView ref (-1) view)
-			res <- mapSplices (f "inputListItem" itemAttrs) items
+			template <- f "inputListTemplate" (makeListSubView ref (-1) view)
+			res <- mapSplices (f "inputListItem") items
 			return $ template ++ res
 
 		attrSplices = "listAttrs" ## listAttrs
