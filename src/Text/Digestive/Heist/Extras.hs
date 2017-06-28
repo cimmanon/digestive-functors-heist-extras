@@ -28,6 +28,8 @@ import Text.Digestive.View
                                                                       | Plain Text
 }----------------------------------------------------------------------------------------------------}
 
+-- these splices allow us to grab the values out of a given type of Field.
+
 dfPlainText :: Monad m => View v -> Splice m
 dfPlainText view = do
 	(ref, _) <- getRefAttributes Nothing
@@ -65,7 +67,7 @@ dfPlainBool view = do
 dfPlainFile :: Monad m => View T.Text -> Splice m
 dfPlainFile view = do
 	(ref, _) <- getRefAttributes Nothing
-	mapSplices (textSplice . T.pack) $ fieldInputFile ref view
+	mapSplices (\x -> runChildrenWith $ "name" ## textSplice $ T.pack x) $ fieldInputFile ref view
 
 {----------------------------------------------------------------------------------------------------{
                                                                       | Choice
