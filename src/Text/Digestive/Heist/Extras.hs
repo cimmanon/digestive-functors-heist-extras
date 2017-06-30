@@ -97,14 +97,17 @@ dfInputCheckboxMultiple view =  do
 }----------------------------------------------------------------------------------------------------}
 
 -- this is an extremely condensed version of dfInputList that only generates the list items,
--- does not generate the indices input element or additional markup
+-- does not generate the indices input element or additional markup.  it will also remove
+-- the child nodes if the list is empty
 dfInputListStatic :: MonadIO m => (View T.Text -> Splices (Splice m)) -> View T.Text -> Splice m
 dfInputListStatic splices view = do
 	(ref, _) <- getRefAttributes Nothing
 	let
 		listRef = absoluteRef ref view
 		items = listSubViews ref view
-	runChildrenWith $ "dfListItem" ## mapSplices (runChildrenWith . digestiveSplices' splices) items
+	case items of
+		[] -> return []
+		_ -> runChildrenWith $ "dfListItem" ## mapSplices (runChildrenWith . digestiveSplices' splices) items
 
 -- this is a variation on the dfInputList splice found in Text.Digestive.Heist
 -- that does not generate any extra markup.  Instead, multiple splices and
