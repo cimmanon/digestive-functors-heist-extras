@@ -6,6 +6,9 @@ module Text.Digestive.Heist.Extras
 	, dfPlainChoiceGroup
 	, dfPlainBool
 	, dfPlainFile
+
+	, dfCustomText
+
 	, dfInputCheckboxMultiple
 	, dfInputListStatic
 	, dfInputListCustom
@@ -68,6 +71,25 @@ dfPlainFile :: Monad m => View T.Text -> Splice m
 dfPlainFile view = do
 	(ref, _) <- getRefAttributes Nothing
 	mapSplices (\x -> runChildrenWith $ "name" ## textSplice $ T.pack x) $ fieldInputFile ref view
+
+{----------------------------------------------------------------------------------------------------{
+                                                                      | Custom
+}----------------------------------------------------------------------------------------------------}
+
+isDisabled :: MonadIO m => T.Text -> View T.Text -> AttrSplice m
+isDisabled ref view = \_ -> return $
+	if viewDisabled ref view
+		then [("disabled", "disabled")]
+		else []
+
+dfCustomText :: MonadIO m => View T.Text -> Splice m
+dfCustomText view = do
+	(ref, attrs) <- getRefAttributes Nothing
+	let
+		attrSplices = "isDisabled" ## isDisabled ref view
+	localHS (bindAttributeSplices attrSplices) $ runChildrenWith $ do
+		"value" ## textSplice $ fieldInputText ref view
+		"name" ## textSplice $ absoluteRef ref view
 
 {----------------------------------------------------------------------------------------------------{
                                                                       | Choice
