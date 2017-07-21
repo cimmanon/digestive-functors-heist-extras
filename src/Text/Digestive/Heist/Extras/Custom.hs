@@ -10,18 +10,15 @@ module Text.Digestive.Heist.Extras.Custom
 
 import Control.Exception (SomeException, try)
 import Control.Monad.Trans (MonadIO, liftIO)
-import Data.Map.Syntax (MapSyntax(..), (##))
+import Data.Map.Syntax ((##))
 import qualified Data.ByteString.Base64 as B64 -- experimental
 import qualified Data.ByteString as BS -- experimental
-import Data.Function (on)
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as BS -- experimental
 import Text.Digestive.Heist
 import Text.Digestive.View
 import Heist
 import Heist.Interpreted
-import qualified Text.XmlHtml as X
-import Data.Monoid (mempty)
 
 ----------------------------------------------------------------------
 
@@ -52,9 +49,9 @@ dfCustomChoiceGroup :: Monad m => View T.Text -> Splice m
 dfCustomChoiceGroup view = do
 	(ref, _) <- getRefAttributes Nothing
 	let
-		filterChoice (_, _, sel) = sel
+		checkedState (_, _, sel) = sel
 		choices = fieldInputChoiceGroup ref view
-		selected = filter (\(_, options) -> not $ null $ filter filterChoice options) choices
+		selected = filter (\(_, options) -> any checkedState options) choices
 		attrSplices = "isDisabled" ## isDisabled $ viewDisabled ref view
 	localHS (bindAttributeSplices attrSplices) $ runChildrenWith $ do
 		"name" ## textSplice $ absoluteRef ref view
@@ -102,7 +99,7 @@ isDisabled x = \_ -> return $
 isChecked :: Monad m => Bool -> AttrSplice m
 isChecked x = \_ -> return $
 	if x
-		then [("disabled", "disabled")]
+		then [("checked", "checked")]
 		else []
 
 --------------------------------------------------------------------- | Common Splices

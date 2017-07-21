@@ -6,7 +6,7 @@ module Text.Digestive.Heist.Extras.List
 	) where
 
 import Control.Monad.Trans (MonadIO)
-import Data.Map.Syntax (MapSyntax(..), (##))
+import Data.Map.Syntax ((##))
 import qualified Data.Text as T
 import Text.Digestive.Heist
 import Heist
@@ -14,7 +14,6 @@ import Heist.Interpreted
 import qualified Text.XmlHtml as X
 import Data.Monoid (mempty)
 
-import Text.Digestive.Form
 import Text.Digestive.Form.List
 import Text.Digestive.View
 
@@ -27,7 +26,6 @@ dfInputListStatic :: MonadIO m => (View T.Text -> Splices (Splice m)) -> View T.
 dfInputListStatic splices view = do
 	(ref, _) <- getRefAttributes Nothing
 	let
-		listRef = absoluteRef ref view
 		items = listSubViews ref view
 	case items of
 		[] -> return []
@@ -98,9 +96,6 @@ dfInputListCustom splices view = do
 			"isHidden" ## const mempty
 
 		items = listSubViews ref view
-
-		itemIndex v = last $ T.split (== '.') $ absoluteRef "" v
-		-- ^ NOTE: use of `last` is probably safe here
 
 		f itemType v = localHS (bindAttributeSplices (attrs v)) $ runChildrenWith $ do
 			digestiveSplices' splices v

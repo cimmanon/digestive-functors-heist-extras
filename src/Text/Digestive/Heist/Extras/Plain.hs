@@ -8,14 +8,11 @@ module Text.Digestive.Heist.Extras.Plain
 	, dfPlainFile
 	) where
 
-import Control.Monad.Trans
-import Data.Map.Syntax (MapSyntax(..), (##))
+import Data.Map.Syntax ((##))
 import qualified Data.Text as T
 import Text.Digestive.Heist
 import Text.Digestive.View
-import Heist
 import Heist.Interpreted
-import qualified Text.XmlHtml as X
 
 ----------------------------------------------------------------------
 
@@ -39,11 +36,11 @@ dfPlainChoiceGroup :: Monad m => View T.Text -> Splice m
 dfPlainChoiceGroup view = do
 	(ref, _) <- getRefAttributes Nothing
 	let
-		filterChoice (_, _, sel) = sel
-		vals = filter (\(_, options) -> not $ null $ filter filterChoice options) $ fieldInputChoiceGroup ref view
+		checkedState (_, _, sel) = sel
+		vals = filter (\(_, options) -> any checkedState options) $ fieldInputChoiceGroup ref view
 		groupSplice (name, options) = runChildrenWith $ do
 			"group" ## textSplice name
-			"choice" ## mapSplices choiceSplice $ filter filterChoice options
+			"choice" ## mapSplices choiceSplice $ filter checkedState options
 		choiceSplice (val, name, _) = runChildrenWith $ do
 			"value" ## textSplice val
 			"name" ## textSplice name

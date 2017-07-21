@@ -5,21 +5,13 @@ module Text.Digestive.Heist.Extras.GroupRadio
 	, dfGroupRadioChoice
 	) where
 
-import Control.Exception (SomeException, try)
-import Control.Monad.Trans
-import Data.Map.Syntax (MapSyntax(..), (##))
 import Data.Function (on)
 import Data.List (partition, unionBy)
-import qualified Data.Text as T
 import Data.Text (Text)
 import Text.Digestive.Heist
-import Heist
 import Heist.Interpreted
 import qualified Text.XmlHtml as X
-import Data.Monoid (mempty)
 
-import Text.Digestive.Form
-import Text.Digestive.Form.List
 import Text.Digestive.View
 
 ----------------------------------------------------------------------
@@ -47,7 +39,7 @@ dfGroupRadioText outerView view = do
 		checkedVal = fieldInputText outerRef outerView
 		finalAttrs = addAttrs attrs' $
 			appendElem (viewDisabled ref view) ("disabled", "") $
-			appendElem (value == checkedVal) ("checked", "") $
+			appendElem (value == checkedVal) ("checked", "")
 			[("type", "radio"), ("id", absoluteRef outerRef view), ("name", absoluteRef outerRef outerView), ("value", value)]
 	return [X.Element "input" finalAttrs []]
 
@@ -63,6 +55,6 @@ dfGroupRadioChoice outerView view = do
 		selectedVals = map (\(x, _, _) -> x) $ filter (\(_, _, sel) -> sel) $ fieldInputChoice outerRef outerView
 		finalAttrs = addAttrs attrs' $
 			appendElem (viewDisabled ref view) ("disabled", "") $
-			appendElem (value `elem` selectedVals) ("checked", "") $
+			appendElem (value `elem` selectedVals) ("checked", "")
 			[("type", "radio"), ("id", absoluteRef outerRef view), ("name", absoluteRef outerRef outerView), ("value", value)]
 	return [X.Element "input" finalAttrs []]

@@ -6,7 +6,7 @@ module Text.Digestive.Heist.Extras
 	, dfInputCheckboxMultiple
 	) where
 
-import Data.Map.Syntax (MapSyntax(..), (##))
+import Data.Map.Syntax ((##))
 import qualified Data.Text as T
 import Text.Digestive.Heist
 import Text.Digestive.View
@@ -16,6 +16,7 @@ import qualified Text.XmlHtml as X
 import Text.Digestive.Heist.Extras.Plain as E
 import Text.Digestive.Heist.Extras.Custom as E
 import Text.Digestive.Heist.Extras.List as E
+import Text.Digestive.Heist.Extras.GroupRadio as E
 
 {----------------------------------------------------------------------------------------------------{
                                                                       | Choice
