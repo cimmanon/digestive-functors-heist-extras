@@ -1,4 +1,4 @@
-{-# LANGUAGE OverloadedStrings, ScopedTypeVariables #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 module Text.Digestive.Heist.Extras
 	( module E
@@ -18,12 +18,11 @@ import Text.Digestive.Heist.Extras.Custom as E
 import Text.Digestive.Heist.Extras.List as E
 import Text.Digestive.Heist.Extras.GroupRadio as E
 
-{----------------------------------------------------------------------------------------------------{
-                                                                      | Choice
-}----------------------------------------------------------------------------------------------------}
+----------------------------------------------------------------------
 
 -- this splice is intended for use with choiceMultiple forms.  it generates a
 -- list of checkboxes, similar to dfInputRadio, but allows for some customization
+{-# DEPRECATED dfInputCheckboxMultiple "Use Text.Digestive.Heist.Extras.Custom.dfCustomChoice instead" #-}
 dfInputCheckboxMultiple :: Monad m => View T.Text -> Splice m
 dfInputCheckboxMultiple view =  do
 	(ref, _) <- getRefAttributes Nothing
