@@ -18,6 +18,10 @@ cabal-version:       >=1.10
 library
   exposed-modules:
     Text.Digestive.Heist.Extras
+    , Text.Digestive.Heist.Extras.Custom
+    , Text.Digestive.Heist.Extras.GroupRadio
+    , Text.Digestive.Heist.Extras.List
+    , Text.Digestive.Heist.Extras.Plain
   -- other-modules:
   -- other-extensions:
   build-depends:
