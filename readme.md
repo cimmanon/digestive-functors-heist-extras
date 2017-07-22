@@ -92,7 +92,7 @@ Here's a template for a list of images where only one can be a chosen as a featu
 
 	<tbody>
 		<dfListItem><tr wrapperAttrs>
-			<td><dfCustomText ref="filename"><img src="/screenshots/${slug}/${value}" width="200" alt="" /></dfCustomText></td>
+			<td><dfCustomText ref="filename"><img src="/screenshots/${value}" width="200" alt="" /></dfCustomText></td>
 			<td><dfPlainText ref="filename">example.jpg</dfPlainText></td>
 			<td><dfPlainText ref="width">480</dfPlainText>px</td>
 			<td><dfPlainText ref="height">320</dfPlainText>px</td>
