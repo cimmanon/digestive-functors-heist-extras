@@ -30,7 +30,7 @@ dfCustomText view = do
 	let
 		attrSplices = "isDisabled" ## isDisabled $ viewDisabled ref view
 	localHS (bindAttributeSplices attrSplices) $ runChildrenWith $ do
-		"name" ## textSplice $ absoluteRef ref view
+		"path" ## textSplice $ absoluteRef ref view
 		"value" ## textSplice $ fieldInputText ref view
 
 dfCustomChoice :: Monad m => View T.Text -> Splice m
@@ -41,7 +41,7 @@ dfCustomChoice view = do
 		selected = filter (\(_, _, sel) -> sel) choices
 		attrSplices = "isDisabled" ## isDisabled $ viewDisabled ref view
 	localHS (bindAttributeSplices attrSplices) $ runChildrenWith $ do
-		"name" ## textSplice $ absoluteRef ref view
+		"path" ## textSplice $ absoluteRef ref view
 		"choice" ## mapSplices choiceSplice choices
 		"selected" ## mapSplices choiceSplice selected
 
@@ -54,7 +54,7 @@ dfCustomChoiceGroup view = do
 		selected = filter (\(_, options) -> any checkedState options) choices
 		attrSplices = "isDisabled" ## isDisabled $ viewDisabled ref view
 	localHS (bindAttributeSplices attrSplices) $ runChildrenWith $ do
-		"name" ## textSplice $ absoluteRef ref view
+		"path" ## textSplice $ absoluteRef ref view
 		"choice" ## mapSplices groupSplice choices
 		"selected" ## mapSplices groupSplice selected
 	where
@@ -71,7 +71,7 @@ dfCustomBool view = do
 			"isDisabled" ## isDisabled $ viewDisabled ref view
 			"isChecked" ## isChecked checked
 	localHS (bindAttributeSplices attrSplices) $ runChildrenWith $ do
-		"name" ## textSplice $ absoluteRef ref view
+		"path" ## textSplice $ absoluteRef ref view
 		"value" ## textSplice $ if checked then "Yes" else "No"
 
 {-# WARNING dfCustomFile "This splice may or may not work as intended" #-}
@@ -81,7 +81,7 @@ dfCustomFile view = do
 	let
 		attrSplices = "isDisabled" ## isDisabled $ viewDisabled ref view
 	localHS (bindAttributeSplices attrSplices) $ runChildrenWith $ do
-		"name" ## textSplice $ absoluteRef ref view
+		"path" ## textSplice $ absoluteRef ref view
 		"file" ## mapSplices fileSplice $ fieldInputFile ref view
 	where
 		fileSplice f = runChildrenWith $ do
