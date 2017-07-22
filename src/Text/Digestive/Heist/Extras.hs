@@ -3,6 +3,7 @@
 module Text.Digestive.Heist.Extras
 	( module E
 
+	, dfPath
 	, dfInputCheckboxMultiple
 	) where
 
@@ -17,6 +18,14 @@ import Text.Digestive.Heist.Extras.Plain as E
 import Text.Digestive.Heist.Extras.Custom as E
 import Text.Digestive.Heist.Extras.List as E
 import Text.Digestive.Heist.Extras.GroupRadio as E
+
+----------------------------------------------------------------------
+
+-- basic text splice that provides the current path in the form,
+-- handy when you have to manually create some form markup
+-- (eg. form.subview)
+dfPath :: Monad m => View T.Text -> Splice m
+dfPath view = return [X.TextNode $ absoluteRef "" view]
 
 ----------------------------------------------------------------------
 
