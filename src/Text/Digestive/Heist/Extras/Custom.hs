@@ -21,6 +21,8 @@ import Text.Digestive.View
 import Heist
 import Heist.Interpreted
 
+import Text.Digestive.Heist.Extras.Internal.Attribute (disabledAttrSplice, checkedAttrSplice)
+
 ----------------------------------------------------------------------
 
 -- these splice allow you to create markup exactly the way you want
@@ -29,7 +31,7 @@ dfCustomText :: Monad m => View Text -> Splice m
 dfCustomText view = do
 	(ref, _) <- getRefAttributes Nothing
 	let
-		attrSplices = "isDisabled" ## isDisabled $ viewDisabled ref view
+		attrSplices = "isDisabled" ## disabledAttrSplice $ viewDisabled ref view
 	localHS (bindAttributeSplices attrSplices) $ runChildrenWith $ do
 		"path" ## textSplice $ absoluteRef ref view
 		"value" ## textSplice $ fieldInputText ref view
@@ -40,7 +42,7 @@ dfCustomChoice view = do
 	let
 		choices = fieldInputChoice ref view
 		selected = filter (\(_, _, sel) -> sel) choices
-		attrSplices = "isDisabled" ## isDisabled $ viewDisabled ref view
+		attrSplices = "isDisabled" ## disabledAttrSplice $ viewDisabled ref view
 	localHS (bindAttributeSplices attrSplices) $ runChildrenWith $ do
 		"path" ## textSplice $ absoluteRef ref view
 		"choice" ## mapSplices choiceSplice choices
@@ -53,7 +55,7 @@ dfCustomChoiceGroup view = do
 		checkedState (_, _, sel) = sel
 		choices = fieldInputChoiceGroup ref view
 		selected = filter (\(_, options) -> any checkedState options) choices
-		attrSplices = "isDisabled" ## isDisabled $ viewDisabled ref view
+		attrSplices = "isDisabled" ## disabledAttrSplice $ viewDisabled ref view
 	localHS (bindAttributeSplices attrSplices) $ runChildrenWith $ do
 		"path" ## textSplice $ absoluteRef ref view
 		"choice" ## mapSplices groupSplice choices
@@ -69,8 +71,8 @@ dfCustomBool view = do
 	let
 		checked = fieldInputBool ref view
 		attrSplices = do
-			"isDisabled" ## isDisabled $ viewDisabled ref view
-			"isChecked" ## isChecked checked
+			"isDisabled" ## disabledAttrSplice $ viewDisabled ref view
+			"isChecked" ## checkedAttrSplice checked
 	localHS (bindAttributeSplices attrSplices) $ runChildrenWith $ do
 		"path" ## textSplice $ absoluteRef ref view
 		"value" ## textSplice $ if checked then "Yes" else "No"
@@ -80,7 +82,7 @@ dfCustomFile :: MonadIO m => View Text -> Splice m
 dfCustomFile view = do
 	(ref, _) <- getRefAttributes Nothing
 	let
-		attrSplices = "isDisabled" ## isDisabled $ viewDisabled ref view
+		attrSplices = "isDisabled" ## disabledAttrSplice $ viewDisabled ref view
 	localHS (bindAttributeSplices attrSplices) $ runChildrenWith $ do
 		"path" ## textSplice $ absoluteRef ref view
 		"file" ## mapSplices fileSplice $ fieldInputFile ref view
@@ -89,27 +91,13 @@ dfCustomFile view = do
 			"name" ## textSplice $ T.pack f
 			"data" ## dataSplice f
 
---------------------------------------------------------------------- | Common Attribute Splices
-
-isDisabled :: Monad m => Bool -> AttrSplice m
-isDisabled x = \_ -> return $
-	if x
-		then [("disabled", "disabled")]
-		else []
-
-isChecked :: Monad m => Bool -> AttrSplice m
-isChecked x = \_ -> return $
-	if x
-		then [("checked", "checked")]
-		else []
-
 --------------------------------------------------------------------- | Common Splices
 
 choiceSplice :: Monad m => (Text, Text, Bool) -> Splice m
 choiceSplice (val, name, sel) =
 	let
 		attrSplices = do
-			"isChecked" ## isChecked sel
+			"isChecked" ## checkedAttrSplice sel
 		splices = do
 			"name" ## textSplice name
 			"value" ## textSplice val
