@@ -8,6 +8,7 @@ module Text.Digestive.Heist.Extras.List
 import Control.Monad.Trans (MonadIO)
 import Data.Map.Syntax ((##))
 import qualified Data.Text as T
+import Data.Text (Text)
 import Text.Digestive.Heist
 import Heist
 import Heist.Interpreted
@@ -22,7 +23,7 @@ import Text.Digestive.View
 -- this is an extremely condensed version of dfInputList that only generates the list items,
 -- does not generate the indices input element or additional markup.  it will also remove
 -- the child nodes if the list is empty
-dfInputListStatic :: MonadIO m => (View T.Text -> Splices (Splice m)) -> View T.Text -> Splice m
+dfInputListStatic :: MonadIO m => (View Text -> Splices (Splice m)) -> View Text -> Splice m
 dfInputListStatic splices view = do
 	(ref, _) <- getRefAttributes Nothing
 	let
@@ -60,7 +61,7 @@ Splices:
 			dfIfInputListTemplate (show content if it is an inputListTemplate)
 	dfListPath (contains the path to the list; eg. form.list_name)
 -}
-dfInputListCustom :: MonadIO m => (View T.Text -> Splices (Splice m)) -> View T.Text -> Splice m
+dfInputListCustom :: MonadIO m => (View Text -> Splices (Splice m)) -> View Text -> Splice m
 dfInputListCustom splices view = do
 	(ref, _) <- getRefAttributes Nothing
 	let

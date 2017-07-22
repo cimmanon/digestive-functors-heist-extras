@@ -14,6 +14,7 @@ import Data.Map.Syntax ((##))
 import qualified Data.ByteString.Base64 as B64 -- experimental
 import qualified Data.ByteString as BS -- experimental
 import qualified Data.Text as T
+import Data.Text (Text)
 import qualified Data.Text.Encoding as BS -- experimental
 import Text.Digestive.Heist
 import Text.Digestive.View
@@ -24,7 +25,7 @@ import Heist.Interpreted
 
 -- these splice allow you to create markup exactly the way you want
 
-dfCustomText :: Monad m => View T.Text -> Splice m
+dfCustomText :: Monad m => View Text -> Splice m
 dfCustomText view = do
 	(ref, _) <- getRefAttributes Nothing
 	let
@@ -33,7 +34,7 @@ dfCustomText view = do
 		"path" ## textSplice $ absoluteRef ref view
 		"value" ## textSplice $ fieldInputText ref view
 
-dfCustomChoice :: Monad m => View T.Text -> Splice m
+dfCustomChoice :: Monad m => View Text -> Splice m
 dfCustomChoice view = do
 	(ref, _) <- getRefAttributes Nothing
 	let
@@ -45,7 +46,7 @@ dfCustomChoice view = do
 		"choice" ## mapSplices choiceSplice choices
 		"selected" ## mapSplices choiceSplice selected
 
-dfCustomChoiceGroup :: Monad m => View T.Text -> Splice m
+dfCustomChoiceGroup :: Monad m => View Text -> Splice m
 dfCustomChoiceGroup view = do
 	(ref, _) <- getRefAttributes Nothing
 	let
@@ -62,7 +63,7 @@ dfCustomChoiceGroup view = do
 			"group" ## textSplice name
 			"choice" ## mapSplices choiceSplice options
 
-dfCustomBool :: Monad m => View T.Text -> Splice m
+dfCustomBool :: Monad m => View Text -> Splice m
 dfCustomBool view = do
 	(ref, _) <- getRefAttributes Nothing
 	let
@@ -75,7 +76,7 @@ dfCustomBool view = do
 		"value" ## textSplice $ if checked then "Yes" else "No"
 
 {-# WARNING dfCustomFile "This splice may or may not work as intended" #-}
-dfCustomFile :: MonadIO m => View T.Text -> Splice m
+dfCustomFile :: MonadIO m => View Text -> Splice m
 dfCustomFile view = do
 	(ref, _) <- getRefAttributes Nothing
 	let
@@ -104,7 +105,7 @@ isChecked x = \_ -> return $
 
 --------------------------------------------------------------------- | Common Splices
 
-choiceSplice :: Monad m => (T.Text, T.Text, Bool) -> Splice m
+choiceSplice :: Monad m => (Text, Text, Bool) -> Splice m
 choiceSplice (val, name, sel) =
 	let
 		attrSplices = do

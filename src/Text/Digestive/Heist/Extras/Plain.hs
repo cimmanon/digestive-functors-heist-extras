@@ -10,6 +10,7 @@ module Text.Digestive.Heist.Extras.Plain
 
 import Data.Map.Syntax ((##))
 import qualified Data.Text as T
+import Data.Text (Text)
 import Text.Digestive.Heist
 import Text.Digestive.View
 import Heist.Interpreted
@@ -22,7 +23,7 @@ dfPlainText view = do
 	(ref, _) <- getRefAttributes Nothing
 	textSplice $ fieldInputText ref view
 
-dfPlainChoice :: Monad m => View T.Text -> Splice m
+dfPlainChoice :: Monad m => View Text -> Splice m
 dfPlainChoice view = do
 	(ref, _) <- getRefAttributes Nothing
 	let
@@ -32,7 +33,7 @@ dfPlainChoice view = do
 			"name" ## textSplice name
 	mapSplices choiceSplice vals
 
-dfPlainChoiceGroup :: Monad m => View T.Text -> Splice m
+dfPlainChoiceGroup :: Monad m => View Text -> Splice m
 dfPlainChoiceGroup view = do
 	(ref, _) <- getRefAttributes Nothing
 	let
@@ -46,12 +47,12 @@ dfPlainChoiceGroup view = do
 			"name" ## textSplice name
 	mapSplices groupSplice vals
 
-dfPlainBool :: Monad m => View T.Text -> Splice m
+dfPlainBool :: Monad m => View Text -> Splice m
 dfPlainBool view = do
 	(ref, _) <- getRefAttributes Nothing
 	textSplice $ if (fieldInputBool ref view) then "Yes" else "No"
 
-dfPlainFile :: Monad m => View T.Text -> Splice m
+dfPlainFile :: Monad m => View Text -> Splice m
 dfPlainFile view = do
 	(ref, _) <- getRefAttributes Nothing
 	mapSplices (\x -> runChildrenWith $ "name" ## textSplice $ T.pack x) $ fieldInputFile ref view
