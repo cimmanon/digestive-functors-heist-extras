@@ -22,7 +22,9 @@ library
     , Text.Digestive.Heist.Extras.GroupRadio
     , Text.Digestive.Heist.Extras.List
     , Text.Digestive.Heist.Extras.Plain
+    , Text.Digestive.Heist.Extras.Value
     , Text.Digestive.Heist.Extras.Internal.Attribute
+    , Text.Digestive.Heist.Extras.Internal.Field
   -- other-modules:
   -- other-extensions:
   build-depends:
