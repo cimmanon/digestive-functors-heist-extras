@@ -15,6 +15,8 @@ import Text.Digestive.Heist
 import Text.Digestive.View
 import Heist.Interpreted
 
+import Text.Digestive.Heist.Extras.Internal.Field (selectedChoiceValues, selectedChoiceGroupValues)
+
 ----------------------------------------------------------------------
 
 -- these splices allow us to grab the values out of a given type of Field.
@@ -27,7 +29,7 @@ dfPlainChoice :: Monad m => View Text -> Splice m
 dfPlainChoice view = do
 	(ref, _) <- getRefAttributes Nothing
 	let
-		vals = filter (\(_, _, sel) -> sel) $ fieldInputChoice ref view
+		vals = selectedChoiceValues $ fieldInputChoice ref view
 		choiceSplice (val, name, _) = runChildrenWith $ do
 			"value" ## textSplice val
 			"name" ## textSplice name
@@ -37,11 +39,10 @@ dfPlainChoiceGroup :: Monad m => View Text -> Splice m
 dfPlainChoiceGroup view = do
 	(ref, _) <- getRefAttributes Nothing
 	let
-		checkedState (_, _, sel) = sel
-		vals = filter (\(_, options) -> any checkedState options) $ fieldInputChoiceGroup ref view
+		vals = selectedChoiceGroupValues $ fieldInputChoiceGroup ref view
 		groupSplice (name, options) = runChildrenWith $ do
 			"group" ## textSplice name
-			"choice" ## mapSplices choiceSplice $ filter checkedState options
+			"choice" ## mapSplices choiceSplice options
 		choiceSplice (val, name, _) = runChildrenWith $ do
 			"value" ## textSplice val
 			"name" ## textSplice name

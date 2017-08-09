@@ -22,6 +22,7 @@ import Heist
 import Heist.Interpreted
 
 import Text.Digestive.Heist.Extras.Internal.Attribute (disabledAttrSplice, checkedAttrSplice)
+import Text.Digestive.Heist.Extras.Internal.Field (selectedChoiceValues, selectedChoiceGroupValues)
 
 ----------------------------------------------------------------------
 
@@ -41,7 +42,7 @@ dfCustomChoice view = do
 	(ref, _) <- getRefAttributes Nothing
 	let
 		choices = fieldInputChoice ref view
-		selected = filter (\(_, _, sel) -> sel) choices
+		selected = selectedChoiceValues choices
 		attrSplices = "isDisabled" ## disabledAttrSplice $ viewDisabled ref view
 	localHS (bindAttributeSplices attrSplices) $ runChildrenWith $ do
 		"path" ## textSplice $ absoluteRef ref view
@@ -52,9 +53,8 @@ dfCustomChoiceGroup :: Monad m => View Text -> Splice m
 dfCustomChoiceGroup view = do
 	(ref, _) <- getRefAttributes Nothing
 	let
-		checkedState (_, _, sel) = sel
 		choices = fieldInputChoiceGroup ref view
-		selected = filter (\(_, options) -> any checkedState options) choices
+		selected = selectedChoiceGroupValues choices
 		attrSplices = "isDisabled" ## disabledAttrSplice $ viewDisabled ref view
 	localHS (bindAttributeSplices attrSplices) $ runChildrenWith $ do
 		"path" ## textSplice $ absoluteRef ref view

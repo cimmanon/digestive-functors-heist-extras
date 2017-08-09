@@ -6,8 +6,13 @@
 module Text.Digestive.Heist.Extras.Internal.Field
 	( queryField'
 	, lookupInput
+	, inChoice
+	, inChoiceGroup
+	, selectedChoiceValues
+	, selectedChoiceGroupValues
 	) where
 
+import Control.Arrow (second)
 import Control.Monad.Identity (Identity (..))
 import Data.Text (Text)
 import Data.Monoid ((<>))
@@ -35,3 +40,25 @@ queryField' path form f = case lookupForm path form of
 -- function copied from Text.Digestive.View
 lookupInput :: Path -> [(Path, FormInput)] -> [FormInput]
 lookupInput path = map snd . filter ((== path) . fst)
+
+----------------------------------------------------------------------
+
+equalChecked :: Eq a => a -> (a, b, Bool) -> Bool
+equalChecked x (y, _, checked) = x == y && checked
+
+inChoice :: Eq a => a -> [(a, b, Bool)] -> Bool
+inChoice x = any (equalChecked x)
+
+inChoiceGroup :: Eq a => a -> [(c, [(a, b, Bool)])] -> Bool
+inChoiceGroup x = any ((inChoice x) . snd)
+
+--
+
+isChecked :: (a, b, Bool) -> Bool
+isChecked (_, _, x) = x
+
+selectedChoiceValues :: [(a, b, Bool)] -> [(a, b, Bool)]
+selectedChoiceValues = filter isChecked
+
+selectedChoiceGroupValues :: [(a, [(b, c, Bool)])] -> [(a, [(b, c, Bool)])]
+selectedChoiceGroupValues = filter (not . null . snd) . map (second (filter isChecked))
