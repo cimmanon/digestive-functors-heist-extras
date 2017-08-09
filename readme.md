@@ -1,37 +1,23 @@
 This is a collection of custom splices for use with Digestive Functors Heist.  Some of the default splices generate invalid markup or don't play nicely with the newer HTML5 form attributes like `required`.
 
-These are intended to be used with either `digestiveSplices'` or `bindDigestiveSplices'`, which can be found in the `custom-splices` branch of [digestive-functors](https://github.com/cimmanon/digestive-functors) for the digestive-functors-heist library.
-
 # Using the splices
 
-There's no bindings, you'll have to create your own before you can use them.
+You'll have to create your own bindings before you can use them.  Note that the dfSubView and dfInputList splices provided by Digestive Functors Heist will not propagate custom splices through their child nodes.  You'll want to overwrite the bindings using the dfSubView and dfInputListStatic/dfInputListCustom splices provided by this library.
 
 ```haskell
 digestiveSplicesCustom :: MonadIO m => View Text -> Splices (Splice m)
-digestiveSplicesCustom = digestiveSplices' splices
-	where
-		splices v = do
-			"dfPlainText" ## dfPlainText v
-			"dfInputListCustom" ## dfInputListCustom digestiveSplicesCustom v
+digestiveSplicesCustom = do
+	-- splice provided by digestive-functors-heist
+	digestiveSplices v
+	-- insert list of new splices you want to add...
+	"dfPlainText" ## dfPlainText v
+	"dfSubView" ## dfSubView v
+	"dfInputListCustom" ## dfInputListCustom digestiveSplicesCustom v
 
 fooH :: AppHandler ()
 fooH = do
 	(view, result) <- runForm "form" fooForm
 	renderWithSplices "path/to/template" $ digestiveSplicesCustom view
-```
-
-Alternately:
-
-```haskell
-digestiveSplicesCustom' :: MonadIO m => View Text -> Splices (Splice m)
-digestiveSplicesCustom' v = do
-	"dfPlainText" ## dfPlainText v
-	"dfInputListCustom" ## dfInputListCustom digestiveSplicesCustom v
-
-fooH' :: AppHandler ()
-fooH' = do
-	(view, result) <- runForm "form" fooForm
-	renderWithSplices "path/to/template" $ digestiveSplices' digestiveSplicesCustom' view
 ```
 
 ## GroupRadio
