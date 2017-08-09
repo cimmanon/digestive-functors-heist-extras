@@ -10,12 +10,16 @@ module Text.Digestive.Heist.Extras.Internal.Attribute
 	, mergeAttrs
 	, appendAttr
 	, extractAttr
+	, getRefAttributes
 	) where
 
-import Data.Text (Text)
+import Control.Monad (mplus)
 import Data.Function (on)
 import Data.List (partition, unionBy)
-import Heist (AttrSplice)
+import Data.Maybe  (fromMaybe)
+import Data.Text (Text)
+import Heist (AttrSplice, getParamNode, HeistT)
+import qualified Text.XmlHtml as X
 
 ----------------------------------------------------------------------
 -- Commonly used HTML form attributes
@@ -57,3 +61,16 @@ extractAttr k xs =
 			((_, v):_) -> (v, ys)
 			_ -> error "The specified attribute does not exist"
 			-- ^ TODO: show the key in the error?
+
+-- copied from Text.Digestive.Heist
+getRefAttributes :: Monad m
+                 => Maybe Text                       -- ^ Optional default ref
+                 -> HeistT m m (Text, [(Text, Text)])  -- ^ (Ref, other attrs)
+getRefAttributes defaultRef = do
+	node <- getParamNode
+	return $ case node of
+		X.Element _ as _ ->
+			let ref = fromMaybe (error $ show node ++ ": missing ref") $
+						lookup "ref" as `mplus` defaultRef
+			in (ref, filter ((/= "ref") . fst) as)
+		_                -> (error "Wrong type of node!", [])

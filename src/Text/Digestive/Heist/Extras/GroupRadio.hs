@@ -6,7 +6,6 @@ module Text.Digestive.Heist.Extras.GroupRadio
 	) where
 
 import Data.Text (Text)
-import Text.Digestive.Heist
 import Text.Digestive.View
 import Heist.Interpreted
 import qualified Text.XmlHtml as X
