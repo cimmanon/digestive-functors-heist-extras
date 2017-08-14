@@ -2,6 +2,10 @@
 
 module Text.Digestive.Heist.Extras.Conditional
 	( dfIfText
+
+	, dfIfDisabled
+	, dfIfEnabled
+	, dfIfNotDisabled
 	) where
 
 import Data.Map.Syntax ((##))
@@ -12,7 +16,10 @@ import Text.Digestive.Heist
 import Text.Digestive.View
 import Heist.Interpreted
 
-----------------------------------------------------------------------
+{----------------------------------------------------------------------------------------------------{
+                                                                      | Visibility based on a value
+}----------------------------------------------------------------------------------------------------}
+
 -- Splices that allow us to hide content if the referenced value is empty
 
 dfIfText :: Monad m => View v -> Splice m
@@ -30,3 +37,25 @@ dfIfText view = do
 		-- ^ if there's no `equals` attribute, display the contents if the ref value is not empty
 		_ -> return []
 		-- ^ otherwise hide the contents
+
+{----------------------------------------------------------------------------------------------------{
+                                                                      | Visibility based on disabled status
+}----------------------------------------------------------------------------------------------------}
+
+dfIfDisabled :: Monad m => View v -> Splice m
+dfIfDisabled view = do
+	(ref, _) <- getRefAttributes Nothing
+	if viewDisabled ref view
+		then runChildren
+		else return []
+
+-- not sure which function name I'm going to prefer, so including them both
+dfIfEnabled :: Monad m => View v -> Splice m
+dfIfEnabled view = do
+	(ref, _) <- getRefAttributes Nothing
+	if viewDisabled ref view
+		then return []
+		else runChildren
+
+dfIfNotDisabled :: Monad m => View v -> Splice m
+dfIfNotDisabled = dfIfNotDisabled
