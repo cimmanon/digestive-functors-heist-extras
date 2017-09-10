@@ -2,7 +2,7 @@
 --  http://haskell.org/cabal/users-guide/
 
 name:                digestive-functors-heist-extras
-version:             0.2.1.1
+version:             0.2.1.2
 -- synopsis:
 -- description:
 license:             BSD3

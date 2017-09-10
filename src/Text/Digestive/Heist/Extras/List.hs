@@ -109,10 +109,21 @@ dfInputListCustom splices view = do
 				isInputListItem = itemType == "inputListItem"
 				attrs = if isInputListItem then itemAttrs else templateAttrs
 
+		-- this splice looks for an "only" attribute that will let you pick
+		-- between only the template or only the data, omitting the attribute
+		-- will display both
 		dfListItem = do
-			template <- f "inputListTemplate" (makeListSubView ref (-1) view)
-			res <- mapSplices (f "inputListItem") items
-			return $ template ++ res
+			node <- getParamNode
+			let
+				listTemplate = f "inputListTemplate" (makeListSubView ref (-1) view)
+				listItems = mapSplices (f "inputListItem") items
+			case X.getAttribute "only" node of
+				Just "template" -> listTemplate
+				Just _ -> listItems
+				Nothing -> do
+					t <- listTemplate
+					xs <- listItems
+					return $ t ++ xs
 
 		attrSplices = "listAttrs" ## listAttrs
 
