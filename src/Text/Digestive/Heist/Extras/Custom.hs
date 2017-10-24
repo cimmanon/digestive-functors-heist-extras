@@ -16,12 +16,11 @@ import qualified Data.ByteString as BS -- experimental
 import qualified Data.Text as T
 import Data.Text (Text)
 import qualified Data.Text.Encoding as BS -- experimental
-import Text.Digestive.Heist
 import Text.Digestive.View
 import Heist
 import Heist.Interpreted
 
-import Text.Digestive.Heist.Extras.Internal.Attribute (disabledAttrSplice, checkedAttrSplice)
+import Text.Digestive.Heist.Extras.Internal.Attribute (getRefAttributes, disabledAttrSplice, checkedAttrSplice)
 import Text.Digestive.Heist.Extras.Internal.Field (selectedChoiceValues, selectedChoiceGroupValues)
 
 ----------------------------------------------------------------------

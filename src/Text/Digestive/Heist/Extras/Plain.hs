@@ -11,10 +11,10 @@ module Text.Digestive.Heist.Extras.Plain
 import Data.Map.Syntax ((##))
 import qualified Data.Text as T
 import Data.Text (Text)
-import Text.Digestive.Heist
 import Text.Digestive.View
 import Heist.Interpreted
 
+import Text.Digestive.Heist.Extras.Internal.Attribute (getRefAttributes)
 import Text.Digestive.Heist.Extras.Internal.Field (selectedChoiceValues, selectedChoiceGroupValues)
 
 ----------------------------------------------------------------------

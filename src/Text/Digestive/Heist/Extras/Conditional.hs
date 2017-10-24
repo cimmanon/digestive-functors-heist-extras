@@ -12,9 +12,10 @@ import Data.Map.Syntax ((##))
 import Data.List (find)
 --import qualified Data.Text as T
 --import Data.Text (Text)
-import Text.Digestive.Heist
 import Text.Digestive.View
 import Heist.Interpreted
+
+import Text.Digestive.Heist.Extras.Internal.Attribute (getRefAttributes)
 
 {----------------------------------------------------------------------------------------------------{
                                                                       | Visibility based on a value

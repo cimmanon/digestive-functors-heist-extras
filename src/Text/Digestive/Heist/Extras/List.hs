@@ -9,7 +9,6 @@ import Control.Monad.Trans (MonadIO)
 import Data.Map.Syntax ((##))
 import qualified Data.Text as T
 import Data.Text (Text)
-import Text.Digestive.Heist
 import Heist
 import Heist.Interpreted
 import qualified Text.XmlHtml as X
@@ -17,6 +16,8 @@ import Data.Monoid (mempty)
 
 import Text.Digestive.Form.List
 import Text.Digestive.View
+
+import Text.Digestive.Heist.Extras.Internal.Attribute (getRefAttributes)
 
 ----------------------------------------------------------------------
 
@@ -30,7 +31,7 @@ dfInputListStatic splices view = do
 		items = listSubViews ref view
 	case items of
 		[] -> return []
-		_ -> runChildrenWith $ "dfListItem" ## mapSplices (runChildrenWith . digestiveSplices' splices) items
+		_ -> runChildrenWith $ "dfListItem" ## mapSplices (runChildrenWith . splices) items
 
 -- this is a variation on the dfInputList splice found in Text.Digestive.Heist
 -- that does not generate any extra markup.  Instead, multiple splices and
@@ -99,7 +100,7 @@ dfInputListCustom splices view = do
 		items = listSubViews ref view
 
 		f itemType v = localHS (bindAttributeSplices (attrs v)) $ runChildrenWith $ do
-			digestiveSplices' splices v
+			splices v
 			"dfListItemIndex" ## return [X.TextNode $ last $ T.split (== '.') $ absoluteRef "" v]
 			"dfListItemPath" ## return [X.TextNode $ absoluteRef "" v]
 			"dfListItemType" ## return [X.TextNode itemType]
