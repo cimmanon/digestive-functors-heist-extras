@@ -11,11 +11,11 @@ module Text.Digestive.Heist.Extras.Plain
 import Data.Map.Syntax ((##))
 import qualified Data.Text as T
 import Data.Text (Text)
-import Text.Digestive.View
+import Text.Digestive.View hiding (fieldInputChoice, fieldInputChoiceGroup)
 import Heist.Interpreted
 
-import Text.Digestive.Heist.Extras.Internal.Attribute (getRefAttributes)
-import Text.Digestive.Heist.Extras.Internal.Field (selectedChoiceValues, selectedChoiceGroupValues)
+import Text.Digestive.Heist.Extras.Internal.Attribute (getRefAttributes, getAttribute)
+import Text.Digestive.Heist.Extras.Internal.Field (selectedChoiceValues, selectedChoiceGroupValues, fieldInputChoice, fieldInputChoiceMultiple, fieldInputChoiceGroup, fieldInputChoiceGroupMultiple)
 
 ----------------------------------------------------------------------
 
@@ -27,9 +27,12 @@ dfPlainText view = do
 
 dfPlainChoice :: Monad m => View Text -> Splice m
 dfPlainChoice view = do
-	(ref, _) <- getRefAttributes Nothing
+	(ref, attrs) <- getRefAttributes Nothing
 	let
-		vals = selectedChoiceValues $ fieldInputChoice ref view
+		choices  = case getAttribute "multiple" attrs of
+			Just _ -> fieldInputChoiceMultiple ref view
+			Nothing -> fieldInputChoice ref view
+		vals = selectedChoiceValues choices
 		choiceSplice (val, name, _) = runChildrenWith $ do
 			"value" ## textSplice val
 			"name" ## textSplice name
@@ -37,9 +40,12 @@ dfPlainChoice view = do
 
 dfPlainChoiceGroup :: Monad m => View Text -> Splice m
 dfPlainChoiceGroup view = do
-	(ref, _) <- getRefAttributes Nothing
+	(ref, attrs) <- getRefAttributes Nothing
 	let
-		vals = selectedChoiceGroupValues $ fieldInputChoiceGroup ref view
+		choices  = case getAttribute "multiple" attrs of
+			Just _ -> fieldInputChoiceGroupMultiple ref view
+			Nothing -> fieldInputChoiceGroup ref view
+		vals = selectedChoiceGroupValues $ choices
 		groupSplice (name, options) = runChildrenWith $ do
 			"group" ## textSplice name
 			"choice" ## mapSplices choiceSplice options

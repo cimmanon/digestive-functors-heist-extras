@@ -5,6 +5,7 @@ module Text.Digestive.Heist.Extras
 
 	, dfPath
 	, dfSubView
+	, dfInputSelect
 	, dfInputSelectGroup
 	, dfInputCheckboxMultiple
 	) where
@@ -12,7 +13,7 @@ module Text.Digestive.Heist.Extras
 import Data.Map.Syntax ((##))
 import Control.Monad.Trans (MonadIO)
 import Data.Text (Text)
-import Text.Digestive.View (View, absoluteRef, subView, fieldInputChoice, fieldInputChoiceGroup, viewDisabled)
+import Text.Digestive.View (View, absoluteRef, subView, viewDisabled)
 import Heist (Splices)
 import Heist.Interpreted
 import qualified Text.XmlHtml as X
@@ -21,7 +22,8 @@ import Text.Digestive.Heist.Extras.Plain as E
 import Text.Digestive.Heist.Extras.Custom as E
 import Text.Digestive.Heist.Extras.List as E
 import Text.Digestive.Heist.Extras.GroupRadio as E
-import Text.Digestive.Heist.Extras.Internal.Attribute (getRefAttributes, appendAttr, mergeAttrs, disabledAttr)
+import Text.Digestive.Heist.Extras.Internal.Attribute (getRefAttributes, getAttribute, appendAttr, mergeAttrs, disabledAttr)
+import Text.Digestive.Heist.Extras.Internal.Field (fieldInputChoice, fieldInputChoiceMultiple, fieldInputChoiceGroup, fieldInputChoiceGroupMultiple)
 
 ----------------------------------------------------------------------
 
@@ -42,6 +44,26 @@ dfSubView splices view = do
 
 ----------------------------------------------------------------------
 
+-- variation of Text.Digestive.Heist.dfSubView.dfInputSelect, gracefully
+-- handles `multiple` option for optional results
+dfInputSelect :: Monad m => View Text -> Splice m
+dfInputSelect view = do
+	(ref, attrs) <- getRefAttributes Nothing
+	let
+		ref'     = absoluteRef ref view
+		choices  = case getAttribute "multiple" attrs of
+			Just _ -> fieldInputChoiceMultiple ref view
+			Nothing -> fieldInputChoice ref view
+		kids     = map makeOption choices
+		finalAttrs = mergeAttrs attrs $ appendAttr (viewDisabled ref view) disabledAttr [("id", ref'), ("name", ref')]
+
+		makeOption (i, c, sel) = X.Element "option" (appendAttr sel ("selected", "selected") [("value", i)]) [X.TextNode c]
+
+	return [X.Element "select" finalAttrs kids]
+
+
+----------------------------------------------------------------------
+
 -- variation of Text.Digestive.Heist.dfSubView.dfInputSelectGroup, gracefully
 -- handles `multiple` option for optional results
 dfInputSelectGroup :: Monad m => View Text -> Splice m
@@ -49,7 +71,9 @@ dfInputSelectGroup view = do
 	(ref, attrs) <- getRefAttributes Nothing
 	let
 		ref'     = absoluteRef ref view
-		choices  = fieldInputChoiceGroup ref view
+		choices  = case getAttribute "multiple" attrs of
+			Just _ -> fieldInputChoiceGroupMultiple ref view
+			Nothing -> fieldInputChoiceGroup ref view
 		kids     = concatMap makeGroup choices
 		finalAttrs = mergeAttrs attrs $ appendAttr (viewDisabled ref view) disabledAttr [("id", ref'), ("name", ref')]
 
@@ -68,7 +92,7 @@ dfInputCheckboxMultiple view =  do
 	(ref, _) <- getRefAttributes Nothing
 	let
 		ref' = absoluteRef ref view
-		choices = fieldInputChoice ref view
+		choices = fieldInputChoiceMultiple ref view
 		--value i = ref' <> "." <> i
 
 		checkboxSplice (i, c, sel) = do

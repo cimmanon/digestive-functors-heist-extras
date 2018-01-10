@@ -10,12 +10,13 @@ module Text.Digestive.Heist.Extras.Internal.Attribute
 	, mergeAttrs
 	, appendAttr
 	, extractAttr
+	, getAttribute
 	, getRefAttributes
 	) where
 
 import Control.Monad (mplus)
 import Data.Function (on)
-import Data.List (partition, unionBy)
+import Data.List (partition, unionBy, find)
 import Data.Maybe  (fromMaybe)
 import Data.Text (Text)
 import Heist (AttrSplice, getParamNode, HeistT)
@@ -61,6 +62,9 @@ extractAttr k xs =
 			((_, v):_) -> (v, ys)
 			_ -> error "The specified attribute does not exist"
 			-- ^ TODO: show the key in the error?
+
+getAttribute :: Eq a => a -> [(a, b)] -> Maybe b
+getAttribute x = fmap snd . find ((==) x . fst)
 
 -- copied from Text.Digestive.Heist
 getRefAttributes :: Monad m

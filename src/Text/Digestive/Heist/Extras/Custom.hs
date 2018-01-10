@@ -16,12 +16,12 @@ import qualified Data.ByteString as BS -- experimental
 import qualified Data.Text as T
 import Data.Text (Text)
 import qualified Data.Text.Encoding as BS -- experimental
-import Text.Digestive.View
+import Text.Digestive.View hiding (fieldInputChoice, fieldInputChoiceGroup)
 import Heist
 import Heist.Interpreted
 
-import Text.Digestive.Heist.Extras.Internal.Attribute (getRefAttributes, disabledAttrSplice, checkedAttrSplice)
-import Text.Digestive.Heist.Extras.Internal.Field (selectedChoiceValues, selectedChoiceGroupValues)
+import Text.Digestive.Heist.Extras.Internal.Attribute (getRefAttributes, disabledAttrSplice, checkedAttrSplice, getAttribute)
+import Text.Digestive.Heist.Extras.Internal.Field (selectedChoiceValues, selectedChoiceGroupValues, fieldInputChoice, fieldInputChoiceMultiple, fieldInputChoiceGroup, fieldInputChoiceGroupMultiple)
 
 ----------------------------------------------------------------------
 
@@ -38,9 +38,11 @@ dfCustomText view = do
 
 dfCustomChoice :: Monad m => View Text -> Splice m
 dfCustomChoice view = do
-	(ref, _) <- getRefAttributes Nothing
+	(ref, attrs) <- getRefAttributes Nothing
 	let
-		choices = fieldInputChoice ref view
+		choices  = case getAttribute "multiple" attrs of
+			Just _ -> fieldInputChoiceMultiple ref view
+			Nothing -> fieldInputChoice ref view
 		selected = selectedChoiceValues choices
 		attrSplices = "isDisabled" ## disabledAttrSplice $ viewDisabled ref view
 	localHS (bindAttributeSplices attrSplices) $ runChildrenWith $ do
@@ -50,9 +52,11 @@ dfCustomChoice view = do
 
 dfCustomChoiceGroup :: Monad m => View Text -> Splice m
 dfCustomChoiceGroup view = do
-	(ref, _) <- getRefAttributes Nothing
+	(ref, attrs) <- getRefAttributes Nothing
 	let
-		choices = fieldInputChoiceGroup ref view
+		choices  = case getAttribute "multiple" attrs of
+			Just _ -> fieldInputChoiceGroupMultiple ref view
+			Nothing -> fieldInputChoiceGroup ref view
 		selected = selectedChoiceGroupValues choices
 		attrSplices = "isDisabled" ## disabledAttrSplice $ viewDisabled ref view
 	localHS (bindAttributeSplices attrSplices) $ runChildrenWith $ do
