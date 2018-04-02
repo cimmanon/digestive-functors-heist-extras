@@ -1,3 +1,5 @@
 .cabal-sandbox
 dist
+dist-*
+*.local
 cabal.sandbox.config
