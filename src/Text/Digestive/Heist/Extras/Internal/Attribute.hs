@@ -13,7 +13,6 @@ module Text.Digestive.Heist.Extras.Internal.Attribute
 	, getRefAttributes
 	) where
 
-import Control.Monad (mplus)
 import Data.Function (on)
 import Data.List (partition, unionBy)
 import Data.Maybe  (fromMaybe)
@@ -66,11 +65,14 @@ extractAttr k xs =
 getRefAttributes :: Monad m
                  => Maybe Text                       -- ^ Optional default ref
                  -> HeistT m m (Text, [(Text, Text)])  -- ^ (Ref, other attrs)
-getRefAttributes defaultRef = do
+getRefAttributes refName = do
 	node <- getParamNode
 	return $ case node of
-		X.Element _ as _ ->
-			let ref = fromMaybe (error $ show node ++ ": missing ref") $
-						lookup "ref" as `mplus` defaultRef
-			in (ref, filter ((/= "ref") . fst) as)
-		_                -> (error "Wrong type of node!", [])
+		X.Element _ attrs _ ->
+			let
+				-- deviation from the original
+				-- checks for refName first, then "ref"
+				attrName = fromMaybe "ref" refName
+				ref = fromMaybe (error $ show node ++ ": missing ref") $ lookup attrName attrs
+			in (ref, filter ((/= attrName) . fst) attrs)
+		_                  -> (error "Wrong type of node!", [])
