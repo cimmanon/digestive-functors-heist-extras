@@ -3,6 +3,7 @@
 module Text.Digestive.Heist.Extras.List
 	( dfInputListStatic
 	, dfInputListCustom
+	, dfInputListSpan
 	) where
 
 import Control.Monad.Trans (MonadIO)
@@ -80,6 +81,86 @@ dfInputListCustom splices view = do
 		"indices" ## indicesSplice listRef items
 		"dfListItem" ## onlyListItemsSplice splices (listTemplateView ref view) items
 		"dfListPath" ## return [X.TextNode listRef]
+
+-- A variation on dfInputListCustom that exects to work with a lit of forms
+-- that contains a list of forms with the intent of having the outer list in
+-- a table that spans the inner list.  Note that it requires 2 ref attributes.
+-- Also note that you don't want to use a dfInputList* splice inside of it for
+-- the inner list, that's automaticaly handled for you.  The inner list cannot
+-- be dynamic (this is mostly due to a limitation with the JavaScript library).
+
+{-
+<dfInputListSpan group="outerlistref" ref="innerlistref"><div listAttrs>
+	<indices/><!-- outer list indices -->
+
+	<table>
+		<thead>
+			<th>Outer list content</th>
+			<th>Inner list content</th>
+			<th>Inner list indices</th>
+		</thead>
+
+		<dfListGroup><tbody wrapperAttrs>
+			<dfListItem><tr>
+				<dfGroupItem><td groupspan><!-- outer list content -->
+					This cell spans all the rows
+				</td></dfGroupItem>
+
+				<td>This cell exists in each row</td><!-- inner list content -->
+				<td><indices/></td><!-- inner list content -->
+			</tr></dfListItem>
+		</tbody></dfListGroup>
+	</table>
+</div></dfInputListSpan>
+-}
+dfInputListSpan :: MonadIO m => (View Text -> Splices (Splice m)) -> View Text -> Splice m
+dfInputListSpan splices view = do
+	(groupRef, _) <- getRefAttributes $ Just "group"
+	(itemRef, _) <- getRefAttributes Nothing
+	let
+		groupListRef = absoluteRef groupRef view
+		listAttrs _ = return
+			[ ("id", groupListRef)
+			, ("class", "inputList inputGroup")
+			]
+
+		groupItems = listSubViews groupRef view
+
+		-- this splice is for the individual items in groupItems
+		groupItemSplices v = do
+			let
+				listRef = absoluteRef itemRef v
+				items = listSubViews itemRef v
+				totalItemsT = T.pack $ show $ length items
+
+				headAttrSplices = "groupspan" ## const $ return [("rowspan", totalItemsT)]
+				headSplice = localHS (bindAttributeSplices headAttrSplices) $ runChildrenWith $ do
+					splices v
+					"total_items" ## return [X.TextNode totalItemsT]
+				tailSplice = return []
+
+				splice s v' = runChildrenWith $ do
+					splices v'
+					"dfGroupItem" ## s
+
+				itemsSplice = case items of
+					(x:xs) -> do
+						x' <- splice headSplice x
+						xs' <- mapSplices (splice tailSplice) xs
+						return $ x' ++ xs'
+					_ -> mapSplices (splice headSplice) items
+
+			--splices v
+			"indices" ## indicesSplice listRef items
+			"dfListItem" ## itemsSplice
+			"dfListPath" ## return [X.TextNode listRef]
+
+		attrSplices = "listAttrs" ## listAttrs
+
+	localHS (bindAttributeSplices attrSplices) $ runChildrenWith $ do
+		"indices" ## indicesSplice groupListRef groupItems
+		"dfListGroup" ## onlyListItemsSplice groupItemSplices (listTemplateView groupRef view) groupItems
+		"dfListGroupPath" ## return [X.TextNode groupListRef]
 
 {----------------------------------------------------------------------------------------------------{
                                                                       | Common Helper Functions
