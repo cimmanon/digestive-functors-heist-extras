@@ -19,7 +19,7 @@ import qualified Text.XmlHtml as X
 
 import Text.Digestive.Heist.Extras.Plain as E
 import Text.Digestive.Heist.Extras.Custom as E
-import Text.Digestive.Heist.Extras.List as E
+import Text.Digestive.Heist.Extras.List as E (dfInputListStatic, dfInputListCustom)
 import Text.Digestive.Heist.Extras.GroupRadio as E
 import Text.Digestive.Heist.Extras.Internal.Attribute (getRefAttributes, appendAttr, mergeAttrs, disabledAttr)
 

@@ -72,72 +72,86 @@ dfInputListCustom splices view = do
 			, ("class", "inputList")
 			]
 
-		templateAttrs v = do
-			let
-				itemRef = absoluteRef "" v
-			"wrapperAttrs" ## \_ -> return
-				[ ("id", itemRef)
-				, ("class", T.append itemRef ".inputListTemplate inputListTemplate")
-				, ("style", "display: none") ]
-			"itemAttrs" ## \_ -> return
-				[ ("style", "display: none")
-				, ("disabled", "disabled")
-				]
-			"isDisabled" ## const (return [ ("disabled", "disabled") ])
-			"isHidden" ## const (return [ ("style", "display: none") ])
-
-		itemAttrs v = do
-			let
-				itemRef = absoluteRef "" v
-			"wrapperAttrs" ## \_ -> return
-				[ ("id", itemRef)
-				, ("class", T.append itemRef ".inputListItem inputListItem")
-				]
-			"itemAttrs" ## const mempty
-			"isDisabled" ## const mempty
-			"isHidden" ## const mempty
-
 		items = listSubViews ref view
-
-		f itemType v = localHS (bindAttributeSplices (attrs v)) $ runChildrenWith $ do
-			splices v
-			"dfListItemIndex" ## return [X.TextNode $ last $ T.split (== '.') $ absoluteRef "" v]
-			"dfListItemPath" ## return [X.TextNode $ absoluteRef "" v]
-			"dfListItemType" ## return [X.TextNode itemType]
-			"dfIfInputListItem" ## if isInputListItem then runChildren else return []
-			"dfIfInputListTemplate" ## if isInputListItem then return [] else runChildren
-			where
-				isInputListItem = itemType == "inputListItem"
-				attrs = if isInputListItem then itemAttrs else templateAttrs
-
-		-- this splice looks for an "only" attribute that will let you pick
-		-- between only the template or only the data, omitting the attribute
-		-- will display both
-		dfListItem = do
-			node <- getParamNode
-			let
-				listTemplate = f "inputListTemplate" (makeListSubView ref (-1) view)
-				listItems = mapSplices (f "inputListItem") items
-			case X.getAttribute "only" node of
-				Just "template" -> listTemplate
-				Just _ -> listItems
-				Nothing -> do
-					t <- listTemplate
-					xs <- listItems
-					return $ t ++ xs
 
 		attrSplices = "listAttrs" ## listAttrs
 
-		indices =
-			[ X.Element "input"
-				[ ("type", "hidden")
-				, ("name", T.intercalate "." [listRef, indicesRef])
-				, ("value", T.intercalate "," $ map
-					(last . ("0":) . viewContext) items)
-				] []
-			]
-
 	localHS (bindAttributeSplices attrSplices) $ runChildrenWith $ do
-		"indices" ## return indices
-		"dfListItem" ## dfListItem
+		"indices" ## indicesSplice listRef items
+		"dfListItem" ## onlyListItemsSplice splices (listTemplateView ref view) items
 		"dfListPath" ## return [X.TextNode listRef]
+
+{----------------------------------------------------------------------------------------------------{
+                                                                      | Common Helper Functions
+}----------------------------------------------------------------------------------------------------}
+
+indicesSplice :: Monad m => Text -> [View v] -> Splice m
+indicesSplice listRef items =
+	return $ [ X.Element "input"
+		[ ("type", "hidden")
+		, ("name", T.intercalate "." [listRef, indicesRef])
+		, ("value", T.intercalate "," $ map
+			(last . ("0":) . viewContext) items)
+		] []
+	]
+
+-- this splice looks for an "only" attribute that will let you pick
+-- between only the template or only the data, omitting the attribute
+-- will display both
+onlyListItemsSplice :: Monad m => (View Text -> Splices (Splice m)) -> View Text -> [View Text] -> Splice m
+onlyListItemsSplice splices template items = do
+	node <- getParamNode
+	let
+		listTemplate = listItemSplice splices "inputListTemplate" template
+		listItems = mapSplices (listItemSplice splices "inputListItem") items
+	case X.getAttribute "only" node of
+		Just "template" -> listTemplate
+		Just _ -> listItems
+		Nothing -> do
+			t <- listTemplate
+			xs <- listItems
+			return $ t ++ xs
+
+listTemplateView :: Text -> View Text -> View Text
+listTemplateView ref view = makeListSubView ref (-1) view
+
+listItemSplice :: Monad m => (View Text -> Splices (Splice m)) -> Text -> View Text -> Splice m
+listItemSplice splices itemType v = localHS (bindAttributeSplices (attrs v)) $ runChildrenWith $ do
+	splices v
+	"dfListItemIndex" ## return [X.TextNode $ last $ T.split (== '.') $ absoluteRef "" v]
+	"dfListItemPath" ## return [X.TextNode $ absoluteRef "" v]
+	"dfListItemType" ## return [X.TextNode itemType]
+	"dfIfInputListItem" ## if isInputListItem then runChildren else return []
+	"dfIfInputListTemplate" ## if isInputListItem then return [] else runChildren
+	where
+		isInputListItem = itemType == "inputListItem"
+		attrs = if isInputListItem then listItemAttrs else listTemplateAttrs
+
+--------------------------------------------------------------------- | Attribute Splices
+
+listTemplateAttrs :: Monad m => View Text -> Splices (AttrSplice m)
+listTemplateAttrs v = do
+	let
+		itemRef = absoluteRef "" v
+	"wrapperAttrs" ## \_ -> return
+		[ ("id", itemRef)
+		, ("class", T.append itemRef ".inputListTemplate inputListTemplate")
+		, ("style", "display: none") ]
+	"itemAttrs" ## \_ -> return
+		[ ("style", "display: none")
+		, ("disabled", "disabled")
+		]
+	"isDisabled" ## const (return [ ("disabled", "disabled") ])
+	"isHidden" ## const (return [ ("style", "display: none") ])
+
+listItemAttrs :: Monad m => View Text -> Splices (AttrSplice m)
+listItemAttrs v = do
+	let
+		itemRef = absoluteRef "" v
+	"wrapperAttrs" ## \_ -> return
+		[ ("id", itemRef)
+		, ("class", T.append itemRef ".inputListItem inputListItem")
+		]
+	"itemAttrs" ## const mempty
+	"isDisabled" ## const mempty
+	"isHidden" ## const mempty
