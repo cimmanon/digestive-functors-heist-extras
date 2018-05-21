@@ -76,7 +76,6 @@ dfCustomBool view = do
 		"path" ## textSplice $ absoluteRef ref view
 		"value" ## textSplice $ if checked then "Yes" else "No"
 
-{-# WARNING dfCustomFile "This splice may or may not work as intended" #-}
 dfCustomFile :: MonadIO m => View Text -> Splice m
 dfCustomFile view = do
 	(ref, _) <- getRefAttributes Nothing
@@ -86,9 +85,13 @@ dfCustomFile view = do
 		"path" ## textSplice $ absoluteRef ref view
 		"file" ## mapSplices fileSplice $ fieldInputFile ref view
 	where
-		fileSplice f = runChildrenWith $ do
-			"name" ## textSplice $ T.pack f
-			"data" ## dataSplice f
+		fileSplice f = do
+			d <- dataSplice f
+			runChildrenWith $ do
+				"name" ## textSplice $ T.pack f
+				"data" ## return d
+				"IfEmpty" ## if null d then runChildren else return []
+				"IfNotEmpty" ## if null d then return [] else runChildren
 
 --------------------------------------------------------------------- | Common Splices
 
@@ -107,5 +110,5 @@ dataSplice :: MonadIO m => FilePath -> Splice m
 dataSplice path = do
 	contents :: (Either SomeException BS.ByteString) <- liftIO $ try (BS.readFile path)
 	case contents of
-		Right c -> textSplice $ BS.decodeUtf8 $ B64.encode c
-		Left _ -> return []
+		Right c | c /= "" -> textSplice $ BS.decodeUtf8 $ B64.encode c
+		_ -> return []
