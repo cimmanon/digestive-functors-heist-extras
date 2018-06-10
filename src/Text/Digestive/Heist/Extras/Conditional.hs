@@ -7,7 +7,6 @@ module Text.Digestive.Heist.Extras.Conditional
 
 	, dfIfDisabled
 	, dfIfEnabled
-	, dfIfNotDisabled
 	) where
 
 import Data.Map.Syntax ((##))
@@ -64,13 +63,9 @@ dfIfDisabled view = do
 		then runChildren
 		else return []
 
--- not sure which function name I'm going to prefer, so including them both
 dfIfEnabled :: Monad m => View v -> Splice m
 dfIfEnabled view = do
 	(ref, _) <- getRefAttributes Nothing
 	if viewDisabled ref view
 		then return []
 		else runChildren
-
-dfIfNotDisabled :: Monad m => View v -> Splice m
-dfIfNotDisabled = dfIfNotDisabled
