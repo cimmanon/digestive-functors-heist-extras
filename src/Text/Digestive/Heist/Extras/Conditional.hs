@@ -2,6 +2,7 @@
 
 module Text.Digestive.Heist.Extras.Conditional
 	( dfIfText
+	, dfIfNotText
 	, dfIfTrue
 	, dfIfFalse
 
@@ -38,6 +39,22 @@ dfIfText view = do
 		-- ^ if we find the `equals` attribute, check if the provided value is equal to the ref value
 		Nothing | val /= "" -> splice
 		-- ^ if there's no `equals` attribute, display the contents if the ref value is not empty
+		_ -> return []
+		-- ^ otherwise hide the contents
+
+dfIfNotText :: Monad m => View v -> Splice m
+dfIfNotText view = do
+	(ref, attrs) <- getRefAttributes Nothing
+	let
+		val = fieldInputText ref view
+		splice = runChildrenWith $ do
+			"path" ## textSplice $ absoluteRef ref view
+			"value" ## textSplice val
+	case find ((== "equals") . fst) attrs of
+		Just (_, v) | val /= v -> splice
+		-- ^ if we find the `equals` attribute, check if the provided value is not equal to the ref value
+		Nothing | val == "" -> splice
+		-- ^ if there's no `equals` attribute, display the contents if the ref value is empty
 		_ -> return []
 		-- ^ otherwise hide the contents
 
