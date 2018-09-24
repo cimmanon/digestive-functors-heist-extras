@@ -6,6 +6,9 @@ module Text.Digestive.Heist.Extras.Conditional
 	, dfIfTrue
 	, dfIfFalse
 
+	, dfIfChoice
+	, dfIfNotChoice
+
 	, dfIfDisabled
 	, dfIfEnabled
 	) where
@@ -13,11 +16,12 @@ module Text.Digestive.Heist.Extras.Conditional
 import Data.Map.Syntax ((##))
 import Data.List (find)
 --import qualified Data.Text as T
---import Data.Text (Text)
+import Data.Text (Text)
 import Text.Digestive.View
 import Heist.Interpreted
 
 import Text.Digestive.Heist.Extras.Internal.Attribute (getRefAttributes)
+import Text.Digestive.Heist.Extras.Internal.Field (selectedChoiceValues)
 
 {----------------------------------------------------------------------------------------------------{
                                                                       | Visibility based on a value
@@ -55,6 +59,37 @@ dfIfNotText view = do
 		-- ^ if we find the `equals` attribute, check if the provided value is not equal to the ref value
 		Nothing | val == "" -> splice
 		-- ^ if there's no `equals` attribute, display the contents if the ref value is empty
+		_ -> return []
+		-- ^ otherwise hide the contents
+
+-- Choice
+dfIfChoice :: Monad m => View Text -> Splice m
+dfIfChoice view = do
+	(ref, attrs) <- getRefAttributes Nothing
+	let
+		vals = fieldInputChoice ref view
+		selectedVals = map (\(x, _,  _) -> x) $ selectedChoiceValues vals
+		choiceSplice (val, name, _) = runChildrenWith $ do
+			"value" ## textSplice val
+			"name" ## textSplice name
+	case find ((== "equals") . fst) attrs of
+		Just (_, v) | v `elem` selectedVals -> runChildren
+		-- ^ if we find the `equals` attribute, check if the provided value is not equal to the ref value
+		_ -> return []
+		-- ^ otherwise hide the contents
+
+dfIfNotChoice :: Monad m => View Text -> Splice m
+dfIfNotChoice view = do
+	(ref, attrs) <- getRefAttributes Nothing
+	let
+		vals = fieldInputChoice ref view
+		selectedVals = map (\(x, _,  _) -> x) $ selectedChoiceValues vals
+		choiceSplice (val, name, _) = runChildrenWith $ do
+			"value" ## textSplice val
+			"name" ## textSplice name
+	case find ((== "equals") . fst) attrs of
+		Just (_, v) | v `notElem` selectedVals -> runChildren
+		-- ^ if we find the `equals` attribute, check if the provided value is not equal to the ref value
 		_ -> return []
 		-- ^ otherwise hide the contents
 
