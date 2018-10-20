@@ -13,12 +13,11 @@ import Data.Text (Text)
 import Heist
 import Heist.Interpreted
 import qualified Text.XmlHtml as X
-import Data.Monoid (mempty)
 
 import Text.Digestive.Form.List
 import Text.Digestive.View
 
-import Text.Digestive.Heist.Extras.Internal.Attribute (getRefAttributes)
+import Text.Digestive.Heist.Extras.Internal.Attribute (getRefAttributes, appendAttr)
 
 ----------------------------------------------------------------------
 
@@ -183,8 +182,8 @@ onlyListItemsSplice :: Monad m => (View Text -> Splices (Splice m)) -> View Text
 onlyListItemsSplice splices template items = do
 	node <- getParamNode
 	let
-		listTemplate = listItemSplice splices "inputListTemplate" template
-		listItems = mapSplices (listItemSplice splices "inputListItem") items
+		listTemplate = listItemSplice splices True template
+		listItems = mapSplices (listItemSplice splices False) items
 	case X.getAttribute "only" node of
 		Just "template" -> listTemplate
 		Just _ -> listItems
@@ -196,43 +195,32 @@ onlyListItemsSplice splices template items = do
 listTemplateView :: Text -> View Text -> View Text
 listTemplateView ref view = makeListSubView ref (-1) view
 
-listItemSplice :: Monad m => (View Text -> Splices (Splice m)) -> Text -> View Text -> Splice m
-listItemSplice splices itemType v = localHS (bindAttributeSplices (attrs v)) $ runChildrenWith $ do
+listItemSplice :: Monad m => (View Text -> Splices (Splice m)) -> Bool -> View Text -> Splice m
+listItemSplice splices isTemplate v = localHS (bindAttributeSplices (listItemAttrs isTemplate v)) $ runChildrenWith $ do
 	splices v
 	"dfListItemIndex" ## return [X.TextNode $ last $ T.split (== '.') $ absoluteRef "" v]
 	"dfListItemPath" ## return [X.TextNode $ absoluteRef "" v]
 	"dfListItemType" ## return [X.TextNode itemType]
-	"dfIfInputListItem" ## if isInputListItem then runChildren else return []
-	"dfIfInputListTemplate" ## if isInputListItem then return [] else runChildren
+	"dfIfInputListItem" ## if isTemplate then return [] else runChildren
+	"dfIfInputListTemplate" ## if isTemplate then runChildren else return []
 	where
-		isInputListItem = itemType == "inputListItem"
-		attrs = if isInputListItem then listItemAttrs else listTemplateAttrs
+		itemType = if isTemplate then "inputListTemplate" else "inputListItem"
 
 --------------------------------------------------------------------- | Attribute Splices
 
-listTemplateAttrs :: Monad m => View Text -> Splices (AttrSplice m)
-listTemplateAttrs v = do
+listItemAttrs :: Monad m => Bool -> View Text -> Splices (AttrSplice m)
+listItemAttrs isTemplate v = do
 	let
 		itemRef = absoluteRef "" v
-	"wrapperAttrs" ## \_ -> return
+	"wrapperAttrs" ## \_ -> return $ appendAttr isTemplate ("style", "display: none")
 		[ ("id", itemRef)
-		, ("class", T.append itemRef ".inputListTemplate inputListTemplate")
-		, ("style", "display: none") ]
-	"itemAttrs" ## \_ -> return
-		[ ("style", "display: none")
-		, ("disabled", "disabled")
+		, ("class", T.append itemRef $ if isTemplate then ".inputListTemplate inputListTemplate" else ".inputListItem inputListItem")
 		]
-	"isDisabled" ## const (return [ ("disabled", "disabled") ])
-	"isHidden" ## const (return [ ("style", "display: none") ])
-
-listItemAttrs :: Monad m => View Text -> Splices (AttrSplice m)
-listItemAttrs v = do
-	let
-		itemRef = absoluteRef "" v
-	"wrapperAttrs" ## \_ -> return
-		[ ("id", itemRef)
-		, ("class", T.append itemRef ".inputListItem inputListItem")
-		]
-	"itemAttrs" ## const mempty
-	"isDisabled" ## const mempty
-	"isHidden" ## const mempty
+	"itemAttrs" ## \_ -> return $ case isTemplate of
+		True ->
+			[ ("style", "display: none")
+			, ("disabled", "disabled")
+			]
+		False -> []
+	"isDisabled" ## const (return $ appendAttr isTemplate ("disabled", "disabled") [])
+	"isHidden" ## const (return $ appendAttr isTemplate ("style", "display: none") [])
