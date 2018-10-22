@@ -18,6 +18,7 @@ import Text.Digestive.Form.List
 import Text.Digestive.View
 
 import Text.Digestive.Heist.Extras.Internal.Attribute (getRefAttributes, appendAttr)
+import Text.Digestive.Heist.Extras.Internal.View (disableView)
 
 ----------------------------------------------------------------------
 
@@ -182,7 +183,7 @@ onlyListItemsSplice :: Monad m => (View Text -> Splices (Splice m)) -> View Text
 onlyListItemsSplice splices template items = do
 	node <- getParamNode
 	let
-		listTemplate = listItemSplice splices True template
+		listTemplate = listItemSplice splices True $ disableView template
 		listItems = mapSplices (listItemSplice splices False) items
 	case X.getAttribute "only" node of
 		Just "template" -> listTemplate
