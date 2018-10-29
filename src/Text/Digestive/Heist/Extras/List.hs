@@ -201,11 +201,11 @@ listItemSplice splices isTemplate v = localHS (bindAttributeSplices (listItemAtt
 	splices v
 	"dfListItemIndex" ## return [X.TextNode $ last $ T.split (== '.') $ absoluteRef "" v]
 	"dfListItemPath" ## return [X.TextNode $ absoluteRef "" v]
-	"dfListItemType" ## return [X.TextNode itemType]
-	"dfIfInputListItem" ## if isTemplate then return [] else runChildren
-	"dfIfInputListTemplate" ## if isTemplate then runChildren else return []
+	"dfListItemType" ## return [X.TextNode $ ifElseTemplate "inputListTemplate" "inputListItem"]
+	"dfIfInputListItem" ## ifElseTemplate (return []) runChildren
+	"dfIfInputListTemplate" ## ifElseTemplate runChildren (return [])
 	where
-		itemType = if isTemplate then "inputListTemplate" else "inputListItem"
+		ifElseTemplate forTemplate forListItem = if isTemplate then forTemplate else forListItem
 
 --------------------------------------------------------------------- | Attribute Splices
 
