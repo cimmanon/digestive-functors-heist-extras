@@ -17,13 +17,15 @@ import Text.Digestive.Types (Method, FormInput, Path, fromPath)
 import Text.Digestive.View
 import Text.Digestive.Form.Internal.Field
 
+import qualified Text.Digestive.Heist.Extras.Debug as D (dfPathList)
 import Text.Digestive.Heist.Extras.Internal.Field
 
 ----------------------------------------------------------------------
 -- Provides a list of possible paths that are visible from the current view
 
+{-# DEPRECATED dfPathList "The dfPathList has been moved to Text.Digestive.Heist.Extras.Debug" #-}
 dfPathList :: Monad m => View T.Text -> Splice m
-dfPathList view = mapSplices (\x -> runChildrenWith $ "path" ## textSplice $ fromPath x) $ debugViewPaths view
+dfPathList = D.dfPathList
 
 ----------------------------------------------------------------------
 -- The purpose of this splice is to bind splices with static tag names so that
