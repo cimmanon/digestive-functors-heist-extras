@@ -23,6 +23,7 @@ library
     , Text.Digestive.Heist.Extras.Debug
     , Text.Digestive.Heist.Extras.GroupRadio
     , Text.Digestive.Heist.Extras.List
+    , Text.Digestive.Heist.Extras.Patch
     , Text.Digestive.Heist.Extras.Plain
     , Text.Digestive.Heist.Extras.Value
     , Text.Digestive.Heist.Extras.Internal.Attribute
