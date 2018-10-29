@@ -16,6 +16,7 @@ import qualified Text.XmlHtml as X
 import Text.Digestive.Form.List
 import Text.Digestive.View
 
+import Text.Digestive.Heist.Extras.Conditional (dfIfDisabled, dfIfEnabled)
 import Text.Digestive.Heist.Extras.Internal.Attribute (getRefAttributes, appendAttr)
 import Text.Digestive.Heist.Extras.Internal.View (disableView)
 
@@ -60,6 +61,8 @@ Splices:
 			dfListItemType (indicates the item type; eg. inputListTemplate or inputListItem)
 			dfIfInputListItem (show content if it is an inputListItem)
 			dfIfInputListTemplate (show content if it is an inputListTemplate)
+			dfEditEnabled (similar to dfIfEnabled, but is always enabled for templates)
+			dfEditDisabled (similar to dfIfDisabled, but is always disabled for templates)
 	dfListPath (contains the path to the list; eg. form.list_name)
 -}
 dfInputListCustom :: Monad m => (View Text -> Splices (Splice m)) -> View Text -> Splice m
@@ -203,6 +206,8 @@ listItemSplice splices isTemplate v = localHS (bindAttributeSplices (listItemAtt
 	"dfListItemType" ## return [X.TextNode $ ifElseTemplate "inputListTemplate" "inputListItem"]
 	"dfIfInputListItem" ## ifElseTemplate (return []) runChildren
 	"dfIfInputListTemplate" ## ifElseTemplate runChildren (return [])
+	"dfEditEnabled" ## ifElseTemplate runChildren $ dfIfEnabled v
+	"dfEditDisabled" ## ifElseTemplate (return []) $ dfIfDisabled v
 	where
 		ifElseTemplate forTemplate forListItem = if isTemplate then forTemplate else forListItem
 
