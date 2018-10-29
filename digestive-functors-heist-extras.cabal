@@ -2,7 +2,7 @@
 --  http://haskell.org/cabal/users-guide/
 
 name:                digestive-functors-heist-extras
-version:             0.2.4.0
+version:             0.2.5.0
 -- synopsis:
 -- description:
 license:             BSD3
@@ -20,6 +20,7 @@ library
     Text.Digestive.Heist.Extras
     , Text.Digestive.Heist.Extras.Conditional
     , Text.Digestive.Heist.Extras.Custom
+    , Text.Digestive.Heist.Extras.Debug
     , Text.Digestive.Heist.Extras.GroupRadio
     , Text.Digestive.Heist.Extras.List
     , Text.Digestive.Heist.Extras.Plain
