@@ -7,6 +7,7 @@ module Text.Digestive.Heist.Extras.List
 	) where
 
 import Data.Map.Syntax ((##))
+import Data.Monoid (mempty)
 import qualified Data.Text as T
 import Data.Text (Text)
 import Heist
@@ -18,6 +19,7 @@ import Text.Digestive.View
 
 import Text.Digestive.Heist.Extras.Conditional (dfIfDisabled, dfIfEnabled)
 import Text.Digestive.Heist.Extras.Internal.Attribute (getRefAttributes, appendAttr)
+import Text.Digestive.Heist.Extras.Internal.Splice (AppendableSplice, runSplicesWith)
 import Text.Digestive.Heist.Extras.Internal.View (disableView)
 
 ----------------------------------------------------------------------
@@ -25,14 +27,14 @@ import Text.Digestive.Heist.Extras.Internal.View (disableView)
 -- this is an extremely condensed version of dfInputList that only generates the list items,
 -- does not generate the indices input element or additional markup.  it will also remove
 -- the child nodes if the list is empty
-dfInputListStatic :: Monad m => (View Text -> Splices (Splice m)) -> View Text -> Splice m
+dfInputListStatic :: Monad m => AppendableSplice m -> View Text -> Splice m
 dfInputListStatic splices view = do
 	(ref, _) <- getRefAttributes Nothing
 	let
 		items = listSubViews ref view
 	case items of
 		[] -> return []
-		_ -> runChildrenWith $ "dfListItem" ## mapSplices (runChildrenWith . splices) items
+		_ -> runChildrenWith $ "dfListItem" ## mapSplices (runChildrenWith . splices mempty) items
 
 -- this is a variation on the dfInputList splice found in Text.Digestive.Heist
 -- that does not generate any extra markup.  Instead, multiple splices and
@@ -65,7 +67,7 @@ Splices:
 			dfEditDisabled (similar to dfIfDisabled, but is always disabled for templates)
 	dfListPath (contains the path to the list; eg. form.list_name)
 -}
-dfInputListCustom :: Monad m => (View Text -> Splices (Splice m)) -> View Text -> Splice m
+dfInputListCustom :: Monad m => AppendableSplice m -> View Text -> Splice m
 dfInputListCustom splices view = do
 	(ref, _) <- getRefAttributes Nothing
 	let
@@ -115,7 +117,7 @@ dfInputListCustom splices view = do
 	</table>
 </div></dfInputListSpan>
 -}
-dfInputListSpan :: Monad m => (View Text -> Splices (Splice m)) -> View Text -> Splice m
+dfInputListSpan :: Monad m => AppendableSplice m -> View Text -> Splice m
 dfInputListSpan splices view = do
 	(groupRef, _) <- getRefAttributes $ Just "group"
 	(itemRef, _) <- getRefAttributes Nothing
@@ -129,7 +131,7 @@ dfInputListSpan splices view = do
 		groupItems = listSubViews groupRef view
 
 		-- this splice is for the individual items in groupItems
-		groupItemSplices v = do
+		groupItemSplices s v = do
 			let
 				listRef = absoluteRef itemRef v
 				items = listSubViews itemRef v
@@ -137,13 +139,13 @@ dfInputListSpan splices view = do
 
 				headAttrSplices = "groupspan" ## const $ return [("rowspan", totalItemsT)]
 				headSplice = localHS (bindAttributeSplices headAttrSplices) $ runChildrenWith $ do
-					splices v
+					splices s v
 					"total_items" ## return [X.TextNode totalItemsT]
 				tailSplice = return []
 
-				splice s v' = runChildrenWith $ do
-					splices v'
-					"dfGroupItem" ## s
+				splice s' v' = runChildrenWith $ do
+					splices s v'
+					"dfGroupItem" ## s'
 
 				itemsSplice = case items of
 					(x:xs) -> do
@@ -181,7 +183,7 @@ indicesSplice listRef items =
 -- this splice looks for an "only" attribute that will let you pick
 -- between only the template or only the data, omitting the attribute
 -- will display both
-onlyListItemsSplice :: Monad m => (View Text -> Splices (Splice m)) -> View Text -> [View Text] -> Splice m
+onlyListItemsSplice :: Monad m => AppendableSplice m -> View Text -> [View Text] -> Splice m
 onlyListItemsSplice splices template items = do
 	node <- getParamNode
 	let
@@ -198,16 +200,21 @@ onlyListItemsSplice splices template items = do
 listTemplateView :: Text -> View Text -> View Text
 listTemplateView ref view = makeListSubView ref (-1) view
 
-listItemSplice :: Monad m => (View Text -> Splices (Splice m)) -> Bool -> View Text -> Splice m
-listItemSplice splices isTemplate v = localHS (bindAttributeSplices (listItemAttrs isTemplate v)) $ runChildrenWith $ do
-	splices v
-	"dfListItemIndex" ## return [X.TextNode $ last $ T.split (== '.') $ absoluteRef "" v]
-	"dfListItemPath" ## return [X.TextNode $ absoluteRef "" v]
-	"dfListItemType" ## return [X.TextNode $ ifElseTemplate "inputListTemplate" "inputListItem"]
-	"dfIfInputListItem" ## ifElseTemplate (return []) runChildren
-	"dfIfInputListTemplate" ## ifElseTemplate runChildren (return [])
-	"dfEditEnabled" ## ifElseTemplate runChildren $ dfIfEnabled v
-	"dfEditDisabled" ## ifElseTemplate (return []) $ dfIfDisabled v
+listItemSplice :: Monad m => AppendableSplice m -> Bool -> View Text -> Splice m
+listItemSplice splices isTemplate v =
+	let
+		globalSplices = do
+			runSplicesWith splices localSplices v
+			"dfListItemIndex" ## return [X.TextNode $ last $ T.split (== '.') $ absoluteRef "" v]
+			"dfListItemPath" ## return [X.TextNode $ absoluteRef "" v]
+			"dfListItemType" ## return [X.TextNode $ ifElseTemplate "inputListTemplate" "inputListItem"]
+			"dfIfInputListItem" ## ifElseTemplate (return []) runChildren
+			"dfIfInputListTemplate" ## ifElseTemplate runChildren (return [])
+		localSplices v' = do
+			"dfEditEnabled" ## ifElseTemplate runChildren $ dfIfEnabled v'
+			"dfEditDisabled" ## ifElseTemplate (return []) $ dfIfDisabled v'
+	in
+		localHS (bindAttributeSplices (listItemAttrs isTemplate v)) $ runChildrenWith $ globalSplices
 	where
 		ifElseTemplate forTemplate forListItem = if isTemplate then forTemplate else forListItem
 

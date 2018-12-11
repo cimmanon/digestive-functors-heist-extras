@@ -28,6 +28,7 @@ library
     , Text.Digestive.Heist.Extras.Value
     , Text.Digestive.Heist.Extras.Internal.Attribute
     , Text.Digestive.Heist.Extras.Internal.Field
+    , Text.Digestive.Heist.Extras.Internal.Splice
     , Text.Digestive.Heist.Extras.Internal.View
   -- other-modules:
   -- other-extensions:
