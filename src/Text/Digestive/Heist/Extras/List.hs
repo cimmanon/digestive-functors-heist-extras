@@ -203,9 +203,10 @@ listTemplateView ref view = makeListSubView ref (-1) view
 listItemSplice :: Monad m => AppendableSplice m -> Bool -> View Text -> Splice m
 listItemSplice splices isTemplate v =
 	let
+		indice = last $ T.split (== '.') $ absoluteRef "" v
 		globalSplices = do
 			runSplicesWith splices localSplices v
-			"dfListItemIndex" ## return [X.TextNode $ last $ T.split (== '.') $ absoluteRef "" v]
+			"dfListItemIndex" ## return [X.TextNode indice]
 			"dfListItemPath" ## return [X.TextNode $ absoluteRef "" v]
 			"dfListItemType" ## return [X.TextNode $ ifElseTemplate "inputListTemplate" "inputListItem"]
 			"dfIfInputListItem" ## ifElseTemplate (return []) runChildren

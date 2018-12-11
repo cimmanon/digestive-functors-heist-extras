@@ -12,7 +12,7 @@ module Text.Digestive.Heist.Extras
 	, dfInputCheckboxMultiple
 	) where
 
-import Data.Map.Syntax ((##))
+import Data.Map.Syntax ((##), mapV)
 import Control.Monad.Trans (MonadIO)
 import Data.Monoid (mempty)
 import Data.Text (Text)
@@ -27,7 +27,7 @@ import Text.Digestive.Heist.Extras.Custom as E
 import Text.Digestive.Heist.Extras.List as E (dfInputListStatic, dfInputListCustom, dfInputListSpan)
 import Text.Digestive.Heist.Extras.GroupRadio as E
 import Text.Digestive.Heist.Extras.Patch as E
-import Text.Digestive.Heist.Extras.Internal.Splice (AppendableSplice, runSplices, mergeSplices, addSplices)
+import Text.Digestive.Heist.Extras.Internal.Splice (AppendableSplice, runSplices, addSplices)
 import Text.Digestive.Heist.Extras.Internal.Attribute (getRefAttributes)
 
 ----------------------------------------------------------------------
@@ -35,18 +35,21 @@ import Text.Digestive.Heist.Extras.Internal.Attribute (getRefAttributes)
 digestiveSplices :: (Monad m, MonadIO m) => View Text -> Splices (Splice m)
 digestiveSplices = digestiveSplicesWith mempty
 
-digestiveSplicesWith :: (Monad m, MonadIO m) => AppendableSplice m -> View Text -> Splices (Splice m)
-digestiveSplicesWith moreSplices = (mergeSplices baseSplices moreSplices) mempty
+digestiveSplicesWith :: (Monad m, MonadIO m) => Splices (AppendableSplice m -> View Text -> Splice m) -> View Text -> Splices (Splice m)
+digestiveSplicesWith moreSplices = runSplices splices
+	where
+--		baseSplices :: (Monad m) => Splices (AppendableSplice m -> View Text -> Splice m)
+		baseSplices = do
+			"dfPath" ## const dfPath
+			"dfSubView" ## dfSubView
+			"dfInputListStatic" ## dfInputListStatic
+			"dfInputListCustom" ## dfInputListCustom
 
-baseSplices :: (Monad m, MonadIO m) => AppendableSplice m
-baseSplices s v = do
-	let
-		nextSplices = addSplices baseSplices s
-	DF.digestiveSplices v
-	"dfPath" ## dfPath v
-	"dfSubView" ## dfSubView nextSplices v
-	"dfInputListStatic" ## dfInputListStatic nextSplices v
-	"dfInputListCustom" ## dfInputListCustom nextSplices v
+		splices s v = do
+			let
+				nextSplices = addSplices splices s
+			DF.digestiveSplices v
+			mapV (\s' -> s' nextSplices v) (do baseSplices; moreSplices)
 
 ----------------------------------------------------------------------
 
