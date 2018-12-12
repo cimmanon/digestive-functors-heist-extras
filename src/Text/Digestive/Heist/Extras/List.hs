@@ -18,6 +18,7 @@ import Text.Digestive.Form.List
 import Text.Digestive.View
 
 import Text.Digestive.Heist.Extras.Conditional (dfIfDisabled, dfIfEnabled)
+import Text.Digestive.Heist.Extras.Debug (dfShowView)
 import Text.Digestive.Heist.Extras.Internal.Attribute (getRefAttributes, appendAttr)
 import Text.Digestive.Heist.Extras.Internal.Splice (AppendableSplice, runSplicesWith)
 import Text.Digestive.Heist.Extras.Internal.View (disableView)
@@ -214,6 +215,8 @@ listItemSplice splices isTemplate v =
 		localSplices v' = do
 			"dfEditEnabled" ## ifElseTemplate runChildren $ dfIfEnabled v'
 			"dfEditDisabled" ## ifElseTemplate (return []) $ dfIfDisabled v'
+			"dfDebugIndex" ## return [X.TextNode indice]
+			"dfDebugShowView" ## dfShowView v'
 	in
 		localHS (bindAttributeSplices (listItemAttrs isTemplate v)) $ runChildrenWith $ globalSplices
 	where
