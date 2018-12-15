@@ -5,24 +5,24 @@ module Text.Digestive.Heist.Extras.Patch
 	, dfInputSelectGroup
 	) where
 
+import Data.Monoid (mempty)
 import Data.Text (Text)
 import Text.Digestive.View (View, absoluteRef, subView, fieldInputChoiceGroup, viewDisabled)
-import Heist (Splices)
 import Heist.Interpreted
 import qualified Text.XmlHtml as X
 
 import Text.Digestive.Heist.Extras.Internal.Attribute (getRefAttributes, appendAttr, mergeAttrs, disabledAttr)
-import Text.Digestive.Heist.Extras.Internal.Splice (AppendableSplice, runSplices)
+import Text.Digestive.Heist.Extras.Internal.Splice (AppendableSplices)
 
 -- This module contains rewrites of splices found in the standard library.
 
 ----------------------------------------------------------------------
 -- variation of Text.Digestive.Heist.dfSubView that allows you to pass in a
 -- list of splices to be made accessible in the child nodes
-dfSubView :: Monad m => AppendableSplice m -> View Text -> Splice m
+dfSubView :: Monad m => AppendableSplices m -> View Text -> Splice m
 dfSubView splices view = do
 	(ref, _) <- getRefAttributes Nothing
-	runChildrenWith $ runSplices splices $ subView ref view
+	runChildrenWith $ splices mempty $ subView ref view
 
 ----------------------------------------------------------------------
 

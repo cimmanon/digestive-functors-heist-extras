@@ -1,14 +1,12 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module Text.Digestive.Heist.Extras.Internal.Splice
-	( AppendableSplice
-	, runSplices
-	, runSplicesWith
+	( AppendableSplices
 	, addSplices
-	, mergeSplices
+	, addSplicesWith
 	) where
 
-import Data.Map.Syntax ((##))
+import Data.Map.Syntax (mapV)
 import Data.Monoid (mempty)
 import Data.Text (Text)
 import Text.Digestive.View (View)
@@ -17,28 +15,23 @@ import Heist.Interpreted
 
 ----------------------------------------------------------------------
 
-type AppendableSplice m = (View Text -> Splices (Splice m)) -> View Text -> Splices (Splice m)
+type AppendableSplices m = Splices (View Text -> Splice m) -> View Text -> Splices (Splice m)
 
-runSplices :: Monad m => AppendableSplice m -> View Text -> Splices (Splice m)
-runSplices splices v = splices mempty v
+addSplices :: Monad m
+	=> Splices ((Splices (View Text -> Splice m) -> View Text -> Splices (Splice m)) -> View Text -> Splice m)
+	-> AppendableSplices m
+addSplices = addSplicesWith mempty
 
-runSplicesWith :: Monad m => AppendableSplice m -> (View Text -> Splices (Splice m)) -> View Text -> Splices (Splice m)
-runSplicesWith splices s v = do
-	splices s v
-	s v
+addSplicesWith :: Monad m
+	=> (View Text -> Splices (Splice m))
+	-> Splices ((Splices (View Text -> Splice m) -> View Text -> Splices (Splice m)) -> View Text -> Splice m)
+	-> AppendableSplices m
+addSplicesWith nonExtendableSplices baseSplices moreSplices view = do
+	let
+	--	newSplices :: Monad m => Splices (View Text -> Splice m) -> View Text -> Splices (Splice m)
+		newSplices = do
+			baseSplices
+			mapV const moreSplices
 
-addSplices :: Monad m => AppendableSplice m -> (View Text -> Splices (Splice m)) -> AppendableSplice m
-addSplices splices moreSplices = go
-	where
---		go :: Monad m => AppendableSplice m
-		go s v = do
-			splices (runSplicesWith go s) v
-			moreSplices v
-
-mergeSplices :: Monad m => AppendableSplice m -> AppendableSplice m -> AppendableSplice m
-mergeSplices splices moreSplices = go
-	where
---		go :: Monad m => AppendableSplice m
-		go s v = do
-			splices (go s) v
-			moreSplices (go s) v
+	nonExtendableSplices view
+	mapV (\splice -> splice (addSplicesWith nonExtendableSplices newSplices) view) newSplices
