@@ -3,6 +3,7 @@
 
 module Text.Digestive.Heist.Extras.Internal.View
 	( disableView
+	, disableRecursive
 	) where
 
 import Data.List (union)
