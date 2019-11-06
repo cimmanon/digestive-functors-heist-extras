@@ -6,7 +6,7 @@ function dfList(el) {
 
 	var matchMinusOne = new RegExp("\-1");
 	var matchListTemplate = new RegExp("inputListTemplate");
-	var matchNumber = new RegExp("[0-9]", "g");
+	var matchNumber = new RegExp("[0-9]+", "g");
 
 	el.addEventListener("click", manageCodes, false);
 
