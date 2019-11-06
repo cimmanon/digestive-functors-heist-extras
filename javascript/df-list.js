@@ -59,7 +59,7 @@ function dfList(el) {
 			listItem.parentNode.removeChild(listItem);
 			// adjust the indices to account for the removed element
 			var oldCounter = listItem.id.match(matchNumber).pop();
-			var regex = new RegExp("(^|,)" + oldCounter + "(,|$)");
+			var regex = new RegExp("((^|,)" + oldCounter + "((?=,)|$))|(," + oldCounter + "$)");
 			indices.value = indices.value.replace(regex, '');
 		}
 	}
